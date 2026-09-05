@@ -67,11 +67,24 @@ the table, and save the image under the same name in `site/src/assets/screenshot
 just demo-gif         # → site/src/assets/lane-demo.gif
 ```
 
-Same machinery: `docs/demo.txt` is a list of `hold-seconds | keys | keycap | caption`
-steps, `scripts/demo.sh` plays them into one `lane --mock` session, captures a frame
-after each, and the renderer assembles the frames into a GIF at half size. The keycap
-and caption are drawn on a translucent panel low over the frame — without them the tour
-is a board flickering through states nobody can name — so every step says which keys
-were pressed and what they did. Give every step a caption: a step without one drops the
-panel, and it reads as a glitch. Edit the steps to change the tour; it comes out
-identical every time.
+Same machinery: `docs/demo.txt` is a list of `hold | keys | keycap | caption` steps,
+`scripts/demo.sh` plays them into one `lane --mock` session, captures a frame after
+each, and the renderer assembles the frames into a GIF at half size.
+
+The keycap and caption are drawn on a translucent panel low over the frame — without
+them the tour is a board flickering through states nobody can name — so every step says
+which keys were pressed and what they did. Give every step a caption: a step without one
+drops the panel, and it reads as a glitch.
+
+`hold` is seconds, or `auto` to derive the dwell from the caption's word count. Prefer
+`auto`: a caption nobody can finish reading is the same as no caption, and a hand-picked
+number goes stale the moment the wording changes. Keep captions short — every word is
+dwell time, and a minute is already a long loop for a README.
+
+A step whose keys are only cursor or move keys (`h j k l ⇧H ⇧J ⇧K ⇧L`) gets the card
+under the cursor ringed in amber, with an arrow from where it was in the previous frame.
+A card changing column is otherwise a jump cut between two dense stills, and no amount of
+extra dwell tells you which of a hundred cards moved. Fold `Escape` into the next step's
+keys rather than spending a frame on it.
+
+Edit the steps to change the tour; it comes out identical every time.

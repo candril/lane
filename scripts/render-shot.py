@@ -22,6 +22,8 @@ SIZE = 30  # rendered at 2x and left that way; retina-friendly on the docs site
 BG = (26, 27, 38)  # theme.bg
 FG = (192, 202, 245)  # theme.text
 PAD = 40
+CW = int(round(ImageFont.truetype(FONT, SIZE, index=0).getlength("M")))
+LH = int(round(SIZE * 1.2))
 
 ANSI16 = [
     (26, 27, 38), (247, 118, 142), (158, 206, 106), (224, 175, 104),
@@ -166,8 +168,7 @@ def image(lines, cols, rows):
     regular = ImageFont.truetype(FONT, SIZE, index=0)
     bold = ImageFont.truetype(FONT, SIZE, index=1)
     italic = ImageFont.truetype(FONT, SIZE, index=2)
-    cw = int(round(regular.getlength("M")))
-    lh = int(round(SIZE * 1.2))
+    cw, lh = CW, LH
     img = Image.new("RGB", (cols * cw + 2 * PAD, rows * lh + 2 * PAD), BG)
     draw = ImageDraw.Draw(img)
     ascent = regular.getmetrics()[0]
@@ -241,20 +242,90 @@ def captioned(img, keycap, text):
     return Image.alpha_composite(img.convert("RGBA"), panel).convert("RGB")
 
 
+FOCUS_BG = (51, 70, 124)  # theme.cardBgFocused — the card under the cursor
+MARK = (224, 175, 104)  # theme.warning, off-hue from anything lane draws itself
+
+
+def focus_box(lines):
+    """Pixel bounds of the run of cells painted in theme.cardBgFocused, or None. The
+    viewer's title bar wears the same colour across the full width; that is not a card,
+    so it is left alone."""
+    cells = [(r, c) for r, row in enumerate(lines) for c, (_, st) in enumerate(row) if st.bg == FOCUS_BG]
+    if not cells:
+        return None
+    rs, cs = [r for r, _ in cells], [c for _, c in cells]
+    if max(cs) - min(cs) > 60:
+        return None
+    return (PAD + min(cs) * CW, PAD + min(rs) * LH,
+            PAD + (max(cs) + 1) * CW, PAD + (max(rs) + 1) * LH)
+
+
+def mark_move(img, box, prev):
+    """Ring the card under the cursor and, when it has just jumped, point at where it
+    came from. A move between columns is otherwise a jump cut between two dense stills:
+    nothing tells the eye which of a hundred cards is the one that changed."""
+    if box is None:
+        return img
+    over = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    draw = ImageDraw.Draw(over)
+    draw.rounded_rectangle(box, radius=8, outline=MARK + (255,), width=5)
+
+    if prev is not None:
+        (ax, ay), (bx, by) = _centre(prev), _centre(box)
+        span = ((bx - ax) ** 2 + (by - ay) ** 2) ** 0.5
+        if span > 2 * CW:
+            ux, uy = (bx - ax) / span, (by - ay) / span
+            sx, sy = _edge(prev, ux, uy, 16)
+            ex, ey = _edge(box, -ux, -uy, 20)
+            draw.line([sx, sy, ex, ey], fill=MARK + (235,), width=6)
+            head = 26
+            draw.polygon(
+                [(ex + ux * head, ey + uy * head),
+                 (ex - uy * head * 0.55, ey + ux * head * 0.55),
+                 (ex + uy * head * 0.55, ey - ux * head * 0.55)],
+                fill=MARK + (235,),
+            )
+    return Image.alpha_composite(img.convert("RGBA"), over).convert("RGB")
+
+
+def _centre(box):
+    return ((box[0] + box[2]) / 2, (box[1] + box[3]) / 2)
+
+
+def _edge(box, ux, uy, slack):
+    """Where the ray leaving the box centre along (ux, uy) crosses its border."""
+    cx, cy = _centre(box)
+    hw, hh = (box[2] - box[0]) / 2 + slack, (box[3] - box[1]) / 2 + slack
+    t = min(hw / abs(ux) if ux else 1e9, hh / abs(uy) if uy else 1e9)
+    return cx + ux * t, cy + uy * t
+
+
+def hold_for(text):
+    """Seconds a frame stays up. A caption nobody can finish reading is the same as no
+    caption, so the dwell follows the word count rather than a number chosen by hand."""
+    return min(8.0, max(3.0, 1.6 + len(text.split()) / 2.4))
+
+
 def gif(frames, out, cols, rows):
-    """frames: (capture path, seconds, keycap, caption) tuples. Half-size and
-    palette-quantised — a full-size truecolor frame sequence would be tens of
+    """frames: (capture path, seconds or "auto", keycap, caption, mark) tuples. Half-size
+    and palette-quantised — a full-size truecolor frame sequence would be tens of
     megabytes for a README."""
     images = []
     durations = []
-    for path, seconds, keycap, caption in frames:
+    prev_focus = None
+    for path, seconds, keycap, caption, mark in frames:
         with open(path, encoding="utf-8", errors="replace") as f:
-            img = image(parse(f.read(), cols, rows), cols, rows)
+            lines = parse(f.read(), cols, rows)
+        img = image(lines, cols, rows)
+        focus = focus_box(lines)
+        if mark:
+            img = mark_move(img, focus, prev_focus)
+        prev_focus = focus
         if keycap or caption:
             img = captioned(img, keycap, caption)
         img = img.resize((img.width // 2, img.height // 2), Image.LANCZOS)
         images.append(img.quantize(colors=128, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE))
-        durations.append(int(seconds * 1000))
+        durations.append(int((hold_for(caption) if seconds == "auto" else float(seconds)) * 1000))
     images[0].save(
         out,
         save_all=True,
@@ -270,7 +341,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("inputs", nargs="*", help="capture.txt out.png")
     ap.add_argument("--gif", metavar="OUT", help="assemble --frames into an animated GIF")
-    ap.add_argument("--frames", metavar="TSV", help="path\\tseconds\\tkeycap\\tcaption per line")
+    ap.add_argument("--frames", metavar="TSV", help="path\\tseconds\\tkeycap\\tcaption\\tmark per line")
     ap.add_argument("--cols", type=int, default=140)
     ap.add_argument("--rows", type=int, default=42)
     args = ap.parse_args()
@@ -280,8 +351,8 @@ def main():
             for line in f:
                 if not line.strip():
                     continue
-                path, seconds, keycap, caption = line.rstrip("\n").split("\t")
-                frames.append((path, float(seconds), keycap, caption))
+                path, seconds, keycap, caption, mark = line.rstrip("\n").split("\t")
+                frames.append((path, seconds, keycap, caption, mark == "1"))
         gif(frames, args.gif, args.cols, args.rows)
         print(args.gif)
         return

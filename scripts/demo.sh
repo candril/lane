@@ -4,10 +4,10 @@
 #
 #   scripts/demo.sh                     # → site/src/assets/lane-demo.gif
 #
-# Each line of docs/demo.txt is `hold-seconds | keys | keycap | caption`: the keys are
-# sent, the pane is captured after they land, and the frame is shown for that long with
-# the keycap and caption drawn on a panel low over it. A line with no keys just holds
-# the previous frame longer.
+# Each line of docs/demo.txt is `hold | keys | keycap | caption`: the keys are sent, the
+# pane is captured after they land, and the frame is shown with the keycap and caption
+# drawn on a panel low over it. `hold` is seconds, or `auto` to let the caption's length
+# set the dwell. A line with no keys just holds the previous frame longer.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -31,6 +31,10 @@ sleep 3
 # Captions are prose — apostrophes and quotes rule out the `xargs` trim used elsewhere.
 trim() { printf '%s' "$1" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'; }
 
+# lane's cursor and move keys. A step made only of these is one where something visibly
+# travelled, and the renderer draws the arrow saying where from.
+moves() { [ -n "$1" ] && ! printf '%s\n' "$1" | tr -d ' ' | grep -qv '^[hjklHJKL]*$'; }
+
 manifest="$SCRATCH/frames.tsv"
 : > "$manifest"
 n=0
@@ -52,7 +56,8 @@ while IFS='|' read -r hold keys keycap caption; do
   n=$((n + 1))
   frame=$(printf "%s/frame-%03d.txt" "$SCRATCH" "$n")
   tmux capture-pane -t "$SESSION" -e -N -p > "$frame"
-  printf '%s\t%s\t%s\t%s\n' "$frame" "$hold" "$keycap" "$caption" >> "$manifest"
+  mark=0; moves "$keys" && mark=1
+  printf '%s\t%s\t%s\t%s\t%s\n' "$frame" "$hold" "$keycap" "$caption" "$mark" >> "$manifest"
 done < docs/demo.txt
 
 tmux kill-session -t "$SESSION" 2>/dev/null || true

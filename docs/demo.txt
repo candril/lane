@@ -1,33 +1,29 @@
-# The README demo: hold-seconds | keys | keycap | caption. Rendered by `just demo-gif`
-# (scripts/demo.sh). The keycap and caption are drawn on a panel low over the frame, so
-# every step says which keys were pressed and what they did. Give every step a caption —
-# a step without one drops the panel, and it reads as a glitch.
+# The README demo: hold | keys | keycap | caption. Rendered by `just demo-gif`
+# (scripts/demo.sh). `hold` is seconds, or `auto` to let the caption's word count set the
+# dwell — prefer `auto`, and spend an explicit number only where a frame needs to breathe.
+#
+# The keycap and caption are drawn on a panel low over the frame. Give every step a
+# caption: a step without one drops the panel, and it reads as a glitch. Keep captions
+# short — every word is dwell time, and a minute is already a long loop.
+#
+# A step whose keys are only cursor or move keys (h j k l ⇧H ⇧J ⇧K ⇧L) gets the card
+# under the cursor ringed and an arrow from where it came; that is what makes a move
+# legible rather than a jump cut. Fold `Escape` into the next step's keys instead of
+# spending a frame on it.
+#
 # Starts on the Team Board, board view, grouped by parent.
 
-2.5 |                    |       | your Jira board in the terminal — lanes by parent, columns from your config
-2.5 | g n                | g n   | flatten the lanes: one column per status
-1.2 | j                  | j k   | h j k l walks the board — one press, one card
-1.2 | l                  | h l   | …sideways too, into the next column
-3.0 | L                  | ⇧L    | moves the card right: In Progress → In Review, a real Jira transition
-2.5 | L                  | ⇧L    | again — In Review → Done
-2.5 | H                  | ⇧H    | and back out of Done
-2.5 | J                  | ⇧J    | re-ranks the card inside its column (⇧K goes up)
-2.5 | S                  | ⇧S    | picks a status directly, from anywhere
-1.5 | Escape             | esc   | backs out of any prompt
-2.5 | a                  | a     | reassigns — edits are optimistic, reverted if Jira says no
-1.5 | Escape             | esc   | back to the board
-1.5 | h k                | h k   | over to the parent story
-3.0 | Enter              | ↵     | opens the issue: fields, description as Markdown, children
-3.0 | z h                | z h   | unfolds the history — who changed what, when
-1.5 | Escape             | esc   | back to the board
-2.5 | g r                | g r   | lanes the board by sprint (g p by parent, g t by type)
-2.5 | g n v g            | v g   | trays each parent's sub-tasks in a basket
-2.0 | /                  | /     | narrows what is loaded…
-3.0 | @me Space -is:done |       | …with one small query language
-1.5 | Escape Escape      | esc   | back to the board
-2.0 | :                  | :     | runs the same grammar against all of Jira
-3.0 | order              |       | …a word, an issue key, or raw JQL
-1.5 | Escape             | esc   | back to the board
-3.0 | C-p                | ^P    | lists every action available right now, with its key
-1.5 | Escape             | esc   | back to the board
-4.0 | ?                  | ?     | shows the whole keymap. Nothing has to be memorised.
+4.0 |                            |     | lanes by parent, columns from your config
+auto | g n                       | g n | flatten the lanes: one column per status
+auto | l                         | h j k l | walks the board — one press, one card
+auto | L                         | ⇧L  | moves the card — a real Jira transition
+auto | L                         | ⇧L  | again, into Done
+auto | H                         | ⇧H  | and back out
+auto | J                         | ⇧J  | re-ranks it in the column
+auto | S                         | ⇧S  | or pick a status directly
+auto | Escape Enter              | ↵   | opens the issue: fields, description, children
+auto | z h                       | z h | unfolds the history — who changed what, when
+auto | Escape / @me Space -is:done | / | narrows what is loaded, in one small query language
+auto | Escape Escape : order     | :   | the same grammar against all of Jira, or raw JQL
+auto | Escape C-p                | ^P  | every action available right now, with its key
+5.0 | Escape ?                   | ?   | the whole keymap. Nothing has to be memorised.
