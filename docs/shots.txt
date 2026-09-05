@@ -1,0 +1,38 @@
+# Screenshot recipes: name | keys, sent to a fresh `lane --mock` (see docs/screenshots.md).
+# Keys are tmux send-keys tokens: a letter, a string, Enter, Escape, Space, C-p …;
+# `wait` pauses for a background load.
+# The demo opens on the Team Board tab, board view, grouped by parent, cursor on the
+# first lane header. `g n` switches to the flat board and lands the cursor on a card.
+
+# ── Board ─────────────────────────────────────────────────────────────────────
+board            | g n
+board-parent     |
+board-sprint     | g r
+board-type       | g t
+swimlanes        | g s
+list             | v l g n
+backlog          | v k
+baskets          | g n v g
+checklist        | g n v c
+under-parent     | g n v u
+collapse         | g n l l c h
+jump             | g n s
+epics            | 2 wait
+
+# ── Issue ─────────────────────────────────────────────────────────────────────
+detail           | g n l Enter
+history          | g n l Enter z h
+diff             | g n l Enter z h G k Enter
+status           | g n l S
+assign           | g n l a
+labels           | g n l #
+close-reason     | g n l R
+create           | g n l n
+multiselect      | v l g n Space j Space j j V j
+
+# ── Find ──────────────────────────────────────────────────────────────────────
+filter           | g n / @me Space -is:done
+search           | g n : order
+palette          | g n l C-p
+help             | ?
+tabs             | T c

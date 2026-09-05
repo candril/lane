@@ -1,0 +1,132 @@
+# lane config — copy to ~/.config/lane/config.toml (or $XDG_CONFIG_HOME/lane/).
+#
+# Credentials are NOT here. The API token comes from $JIRA_API_TOKEN, and the
+# server URL + account email from the `jira` CLI YAML (~/.config/.jira/.config.yml,
+# or $JIRA_CONFIG_FILE). This file only describes what to show.
+#
+# `lane import <board-id>` prints a [[boards]] block (name, JQL, columns) read
+# from a real Jira board, ready to paste below.
+
+# ── Display preferences (optional) ───────────────────────────────────────────
+[display]
+# Where sub-tasks sit in the flat / by-type / swimlane / sprint views (specs/008,
+# specs/051). The by-parent view always spreads them across their own columns.
+#   "own-column"   — in the column matching their own status, tagged ↳PARENT (default)
+#   "under-parent" — nested under the parent card, indented, badged with their status
+#   "checklist"    — folded into the parent card as status-icon rows
+#   "basket"       — own column, with each parent's run of cards wrapped in a tray
+subtasks = "own-column"
+# Which children to draw at all (specs/052): "all" (default), "hide-done", "none".
+children = "all"
+# Card tags on start; `t e` / `t l` toggle them live (specs/039).
+epics = true
+labels = true
+
+# ── Background refresh (specs/033) ───────────────────────────────────────────
+[refresh]
+interval = 60          # seconds between polls; 0 disables
+on_focus = true        # refresh when the terminal regains focus
+
+# ── Quick filters (specs/036): `f` + letter applies the query ────────────────
+[filters]
+b = "type:bug -is:done"
+m = "@me"
+u = "#UX -is:done"
+
+# ── Instance-wide provider settings (shared by every board) ──────────────────
+[jira]
+project            = "SHOP"                # created issues go here; bare numbers in `:` resolve against it
+story_points_field = "customfield_10016"  # the estimate field, shown as "5 pts"
+sprint_field       = "customfield_10020"  # the Sprint field; enables the `sprint` grouping (specs/050)
+# epic_link_field  = "customfield_10014"  # only on classic projects; the default is `parent`
+default_resolution = "Done"               # what a close carries when you don't pick a reason (specs/053)
+
+# Statuses that are the backlog rather than a column (specs/044): kept off the board,
+# shown by the backlog view (`v k`). A board may override the list.
+backlog_statuses = ["To be discussed", "In refinement"]
+
+# Jira issue-type NAMES lane sends when creating (specs/012). Type names vary by
+# project scheme, so override the ones that differ from Story/Bug/Task/Epic/Sub-task.
+[jira.issue_types]
+subtask = "Technical task"
+
+# Statuses → columns, in display order. Several statuses can fold into one column;
+# the first status listed is the one a card is transitioned to when moved there.
+[[jira.columns]]
+title    = "To Do"
+statuses = ["Open", "Ready"]
+
+[[jira.columns]]
+title    = "In Progress"
+statuses = ["In Progress"]
+
+[[jira.columns]]
+title    = "In Review"
+statuses = ["In Review", "Ready to Deploy"]
+
+[[jira.columns]]
+title    = "Done"
+statuses = ["Resolved", "Closed"]
+
+# ── Boards: one tab each, in this order (specs/016) ──────────────────────────
+[[boards]]
+name = "Team Board"
+view = "board"                            # board | list | backlog
+grouping = "parent"                       # none | parent | type | swimlanes | sprint
+# Rank order is applied on top, so no ORDER BY is needed.
+jql  = "project = SHOP AND type != Epic AND sprint in openSprints()"
+# Where a `:` search starts while this tab is active; `^A` widens it to all of Jira.
+search_scope = "project = SHOP"
+
+  # Stamped onto every issue created from this board, so a create screen with
+  # required fields (team, component, …) doesn't reject the headless create.
+  [boards.create_defaults]
+  components = ["Checkout Platform"]
+  labels     = ["team-checkout"]
+    [boards.create_defaults.custom]       # custom fields by Jira field id, sent verbatim
+    customfield_10001 = "1f0c4a2e-7b3d-4e8f-9a6c-2d5e8f1a3b7c"
+
+  # Query swimlanes (`g s`), matched locally in order; give the last one a catch-all.
+  [[boards.swimlanes]]
+  name = "PO/UX stream"
+  jql  = "labels in (UX, PO)"
+
+  [[boards.swimlanes]]
+  name = "Daily work"
+  jql  = "labels not in (UX, PO) OR labels is EMPTY"
+
+# An epic tab (specs/034): load the epics with their issues and group by parent, and
+# each issue nests under its epic.
+[[boards]]
+name = "Epics"
+jql  = "project = SHOP AND (type = Epic OR parent in (SHOP-100, SHOP-200, SHOP-300))"
+grouping = "parent"
+
+# A scrum board (specs/050): open it by sprint — one lane per live sprint, active
+# first, then upcoming, then "No sprint". Sprint names repeat across boards, so
+# `sprint_board_id` (from the board's URL) scopes the lanes to this board's own.
+[[boards]]
+name = "Web & Apps"
+grouping = "sprint"
+sprint_board_id = 42
+jql = "project in (WEB, APP) AND (sprint in openSprints() OR sprint in futureSprints())"
+
+# A board on another project, workflow — or Jira instance (specs/030, specs/031).
+# Everything not set here falls back to the [jira] table.
+#
+# [[boards]]
+# name    = "Ops"
+# project = "OPS"
+# jql     = "project = OPS"
+# jira_config = "~/.config/.jira/ops.yml"  # a `jira` CLI YAML with that instance's server + login
+#   [boards.issue_types]
+#   subtask = "Subtask"
+#   [[boards.columns]]
+#   title = "Triage"
+#   statuses = ["Triage"]
+#   [[boards.columns]]
+#   title = "Doing"
+#   statuses = ["In Progress"]
+#   [[boards.columns]]
+#   title = "Done"
+#   statuses = ["Done"]

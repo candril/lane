@@ -1,0 +1,49 @@
+{
+  "name": "lane",
+  "version": "0.1.0",
+  "description": "Terminal Kanban board for Jira. Keyboard-first, vim-flavoured, config-driven.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/candril/lane.git"
+  },
+  "homepage": "https://candril.github.io/lane/",
+  "keywords": [
+    "jira",
+    "kanban",
+    "terminal",
+    "tui",
+    "cli",
+    "bun"
+  ],
+  "module": "src/index.tsx",
+  "type": "module",
+  "bin": {
+    "lane": "./dist/lane"
+  },
+  "scripts": {
+    "dev": "bun run src/index.tsx",
+    "build": "bun run scripts/build.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "oxlint src scripts",
+    "lint:fix": "oxlint --fix src scripts",
+    "fmt": "oxfmt src scripts",
+    "fmt:check": "oxfmt --check src scripts"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/react": "^18.2.0",
+    "oxfmt": "^0.42.0",
+    "oxlint": "^1.57.0",
+    "undici-types": "^8.7.0"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@opentui/core": "0.1.87",
+    "@opentui/react": "0.1.87",
+    "marked": "17.0.1",
+    "react": "19"
+  }
+}

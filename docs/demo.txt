@@ -1,0 +1,25 @@
+# The README demo: hold-seconds | keys. Rendered by `just demo-gif` (scripts/demo.sh).
+# Starts on the Team Board, board view, grouped by parent.
+
+2.5 |
+2.5 | g n
+1.2 | l
+1.2 | j
+2.0 | L
+2.0 | H
+1.5 | /
+2.5 | @me Space -is:done
+1.5 | Escape
+1.0 | Escape
+3.0 | g r
+2.5 | g n v g
+1.5 | v o
+3.0 | Enter
+3.0 | z h
+1.5 | Escape
+3.0 | C-p
+1.5 | Escape
+1.5 | :
+3.0 | order
+1.5 | Escape
+3.0 | ?
