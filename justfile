@@ -75,7 +75,7 @@ audit-public:
     list="${LANE_DENYLIST:-$HOME/.config/lane-dev/denylist}"
     if [ ! -f "$list" ]; then echo "no denylist at $list"; exit 2; fi
     if git ls-files -co --exclude-standard | grep -vE '^(node_modules|dist)/' \
-        | xargs grep -niE -f "$list" 2>/dev/null; then
+        | xargs grep -nIiE -f "$list" 2>/dev/null; then
       echo; echo "audit-public: matches above must be scrubbed"; exit 1
     fi
     echo "audit-public: clean"
