@@ -208,27 +208,37 @@ def image(lines, cols, rows):
     return img
 
 
-CAPTION_BG = (22, 22, 30)  # theme.modalBg
+CAPTION_SIZE = int(SIZE * 1.45)
+CAPTION_BG = (12, 12, 19, 232)  # theme.modalBg, a shade darker and near-opaque
 CAPTION_KEY = (122, 162, 247)  # theme.primary
-CAPTION_TEXT = (192, 202, 245)  # theme.text
+CAPTION_TEXT = (224, 230, 250)
+CAPTION_Y = 0.80  # panel centre, as a fraction of the frame height
 
 
 def captioned(img, keycap, text):
-    """A strip under the frame naming the keys just pressed and what they did. Without
-    it the demo is a board flickering through states nobody can name."""
-    key_font = ImageFont.truetype(FONT, SIZE, index=1)
-    font = ImageFont.truetype(FONT, SIZE, index=0)
-    lh = int(round(SIZE * 1.2))
-    strip = lh * 2
-    out = Image.new("RGB", (img.width, img.height + strip), CAPTION_BG)
-    out.paste(img, (0, 0))
-    draw = ImageDraw.Draw(out)
-    y = img.height + (strip - SIZE) // 2 - 2
+    """A translucent panel low over the frame, naming the keys just pressed and what
+    they did — without it the demo is a board flickering through states nobody can
+    name. Over the board rather than in a strip beneath it, so the caption reads at a
+    glance without the eye leaving the frame."""
+    key_font = ImageFont.truetype(FONT, CAPTION_SIZE, index=1)
+    font = ImageFont.truetype(FONT, CAPTION_SIZE, index=0)
+    gap = font.getlength("MM") if keycap and text else 0
+    key_w = key_font.getlength(keycap) if keycap else 0
+    pad_x, pad_y = CAPTION_SIZE, int(CAPTION_SIZE * 0.7)
+    w = key_w + gap + (font.getlength(text) if text else 0) + 2 * pad_x
+    h = CAPTION_SIZE + 2 * pad_y
+    x0 = (img.width - w) / 2
+    y0 = img.height * CAPTION_Y - h / 2
+
+    panel = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    draw = ImageDraw.Draw(panel)
+    draw.rounded_rectangle([x0, y0, x0 + w, y0 + h], radius=h / 3, fill=CAPTION_BG)
+    x, mid = x0 + pad_x, y0 + h / 2
     if keycap:
-        draw.text((PAD, y), keycap, font=key_font, fill=CAPTION_KEY)
-    # A fixed keycap column, so the caption text does not jitter frame to frame.
-    draw.text((PAD + int(font.getlength("M" * 8)), y), text, font=font, fill=CAPTION_TEXT)
-    return out
+        draw.text((x, mid), keycap, font=key_font, fill=CAPTION_KEY, anchor="lm")
+    if text:
+        draw.text((x + key_w + gap, mid), text, font=font, fill=CAPTION_TEXT, anchor="lm")
+    return Image.alpha_composite(img.convert("RGBA"), panel).convert("RGB")
 
 
 def gif(frames, out, cols, rows):

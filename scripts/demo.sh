@@ -6,7 +6,7 @@
 #
 # Each line of docs/demo.txt is `hold-seconds | keys | keycap | caption`: the keys are
 # sent, the pane is captured after they land, and the frame is shown for that long with
-# the keycap and caption printed in a strip underneath. A line with no keys just holds
+# the keycap and caption drawn on a panel low over it. A line with no keys just holds
 # the previous frame longer.
 set -euo pipefail
 

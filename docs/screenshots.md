@@ -70,6 +70,8 @@ just demo-gif         # → site/src/assets/lane-demo.gif
 Same machinery: `docs/demo.txt` is a list of `hold-seconds | keys | keycap | caption`
 steps, `scripts/demo.sh` plays them into one `lane --mock` session, captures a frame
 after each, and the renderer assembles the frames into a GIF at half size. The keycap
-and caption are printed in a strip under the frame — without them the tour is a board
-flickering through states nobody can name — so every step says which keys were pressed
-and what they did. Edit the steps to change the tour; it comes out identical every time.
+and caption are drawn on a translucent panel low over the frame — without them the tour
+is a board flickering through states nobody can name — so every step says which keys
+were pressed and what they did. Give every step a caption: a step without one drops the
+panel, and it reads as a glitch. Edit the steps to change the tour; it comes out
+identical every time.
