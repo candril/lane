@@ -61,12 +61,26 @@ curl -fsSL -o "$ASSET" "${BASE}/${ASSET}"
 curl -fsSL -o SHA256SUMS "${BASE}/SHA256SUMS"
 
 echo "Verifying checksum..."
-if command -v sha256sum >/dev/null 2>&1; then
-  grep " ${ASSET}\$" SHA256SUMS | sha256sum -c --quiet
-elif command -v shasum >/dev/null 2>&1; then
-  grep " ${ASSET}\$" SHA256SUMS | shasum -a 256 -c --quiet
+EXPECTED=$(grep " ${ASSET}\$" SHA256SUMS | cut -d' ' -f1)
+if [ -z "$EXPECTED" ]; then
+  echo "Error: ${ASSET} is not listed in SHA256SUMS" >&2
+  exit 1
+fi
+# `shasum` is on every macOS; GNU and BSD `sha256sum` disagree on flags, so compare
+# the digest ourselves instead of relying on `-c`.
+if command -v shasum >/dev/null 2>&1; then
+  ACTUAL=$(shasum -a 256 "$ASSET" | cut -d' ' -f1)
+elif command -v sha256sum >/dev/null 2>&1; then
+  ACTUAL=$(sha256sum "$ASSET" | cut -d' ' -f1)
 else
-  echo "Warning: neither sha256sum nor shasum found, skipping verification" >&2
+  echo "Warning: neither shasum nor sha256sum found, skipping verification" >&2
+  ACTUAL="$EXPECTED"
+fi
+if [ "$ACTUAL" != "$EXPECTED" ]; then
+  echo "Error: checksum mismatch for ${ASSET}" >&2
+  echo "  expected ${EXPECTED}" >&2
+  echo "  got      ${ACTUAL}" >&2
+  exit 1
 fi
 
 echo "Installing..."
