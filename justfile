@@ -1,3 +1,6 @@
+# Personal recipes, not checked in (audit-public lives here)
+import? 'local.just'
+
 # Default recipe - show available commands
 default:
     @just --list
@@ -67,18 +70,6 @@ build-all:
 # Build and install the binary to ~/.local/bin
 install-bin: build
     cp dist/lane ~/.local/bin/lane
-
-# Grep the tree for names that must not go public ($LANE_DENYLIST: one regex per line, kept outside the repo)
-audit-public:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    list="${LANE_DENYLIST:-$HOME/.config/lane-dev/denylist}"
-    if [ ! -f "$list" ]; then echo "no denylist at $list"; exit 2; fi
-    if git ls-files -co --exclude-standard | grep -vE '^(node_modules|dist)/' \
-        | xargs grep -nIiE -f "$list" 2>/dev/null; then
-      echo; echo "audit-public: matches above must be scrubbed"; exit 1
-    fi
-    echo "audit-public: clean"
 
 # Open the demo board for screenshots: isolated state, fixed version label
 shot:

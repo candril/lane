@@ -17,3 +17,6 @@ tsconfig.tsbuildinfo
 # Local editor / agent state
 .vim/
 .claude/settings.local.json
+
+# Local-only just recipes
+local.just

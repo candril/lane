@@ -14,7 +14,6 @@ Lint with oxlint, format with oxfmt. Task runner: `just`.
 - `just check` — typecheck + lint + fmt-check (run before finishing work)
 - `just test` / `just typecheck` / `just lint` / `just fmt`
 - `just shots` — regenerate the docs screenshots (docs/screenshots.md)
-- `just audit-public` — grep the tree against the local denylist before pushing to the public repo
 
 ## Conventions
 
@@ -42,5 +41,6 @@ provider over seed data — the tests' compact fixture, or the fuller demo board
 mutations (optimistic, reverted on failure), selection and the viewer. Every feature
 traces to a numbered spec in `specs/`; the docs site lives in `site/` (Astro Starlight).
 
-Nothing DG-internal goes in the tree: examples use the fictional `SHOP` project, and
-`just audit-public` must pass before anything is pushed to the public repo.
+This repo is public. Nothing from a real employer's Jira goes in the tree — no real project
+keys, custom field ids, board ids, team names or people: examples use the fictional `SHOP`
+project. `just audit-public`, if that recipe exists locally, must pass before a push.
