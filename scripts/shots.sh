@@ -43,7 +43,7 @@ shoot() {
     sleep 0.35
   done
   sleep 1
-  tmux capture-pane -t "$SESSION" -e -p > "$SCRATCH/$name.txt"
+  tmux capture-pane -t "$SESSION" -e -N -p > "$SCRATCH/$name.txt"
   python3 scripts/render-shot.py "$SCRATCH/$name.txt" "$OUT/$name.png" --cols "$COLS" --rows "$ROWS"
 }
 

@@ -4,9 +4,10 @@
 #
 #   scripts/demo.sh                     # → site/src/assets/lane-demo.gif
 #
-# Each line of docs/demo.txt is `hold-seconds | keys`: the keys are sent, the pane is
-# captured after they land, and the frame is shown for that long. A line with no keys
-# just holds the previous frame longer.
+# Each line of docs/demo.txt is `hold-seconds | keys | keycap | caption`: the keys are
+# sent, the pane is captured after they land, and the frame is shown for that long with
+# the keycap and caption printed in a strip underneath. A line with no keys just holds
+# the previous frame longer.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -27,12 +28,18 @@ tmux new-session -d -s "$SESSION" -x "$COLS" -y "$ROWS" \
    bun --define 'LANE_VERSION=\"0.1.0\"' src/index.tsx --mock 2>/dev/null; sleep 600"
 sleep 3
 
-frames=()
+# Captions are prose — apostrophes and quotes rule out the `xargs` trim used elsewhere.
+trim() { printf '%s' "$1" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'; }
+
+manifest="$SCRATCH/frames.tsv"
+: > "$manifest"
 n=0
-while IFS= read -r line; do
-  [[ -z "$line" || "$line" == \#* ]] && continue
-  hold=$(echo "${line%%|*}" | xargs)
-  keys=$(echo "${line#*|}" | xargs)
+while IFS='|' read -r hold keys keycap caption; do
+  [[ -z "${hold// /}" || "${hold// /}" == \#* ]] && continue
+  hold=$(trim "$hold")
+  keys=$(trim "$keys")
+  keycap=$(trim "${keycap:-}")
+  caption=$(trim "${caption:-}")
   for key in $keys; do
     if [ "$key" = "wait" ]; then
       sleep 2
@@ -44,9 +51,9 @@ while IFS= read -r line; do
   sleep 0.6
   n=$((n + 1))
   frame=$(printf "%s/frame-%03d.txt" "$SCRATCH" "$n")
-  tmux capture-pane -t "$SESSION" -e -p > "$frame"
-  frames+=("$frame:$hold")
+  tmux capture-pane -t "$SESSION" -e -N -p > "$frame"
+  printf '%s\t%s\t%s\t%s\n' "$frame" "$hold" "$keycap" "$caption" >> "$manifest"
 done < docs/demo.txt
 
 tmux kill-session -t "$SESSION" 2>/dev/null || true
-python3 scripts/render-shot.py --gif "$OUT" --cols "$COLS" --rows "$ROWS" "${frames[@]}"
+python3 scripts/render-shot.py --gif "$OUT" --frames "$manifest" --cols "$COLS" --rows "$ROWS"

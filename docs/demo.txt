@@ -1,25 +1,32 @@
-# The README demo: hold-seconds | keys. Rendered by `just demo-gif` (scripts/demo.sh).
+# The README demo: hold-seconds | keys | keycap | caption. Rendered by `just demo-gif`
+# (scripts/demo.sh). The keycap and caption are printed in a strip under the frame, so
+# every step says which keys were pressed and what they did.
 # Starts on the Team Board, board view, grouped by parent.
 
-2.5 |
-2.5 | g n
-1.2 | l
-1.2 | j
-2.0 | L
-2.0 | H
-1.5 | /
-2.5 | @me Space -is:done
-1.5 | Escape
-1.0 | Escape
-3.0 | g r
-2.5 | g n v g
-1.5 | v o
-3.0 | Enter
-3.0 | z h
-1.5 | Escape
-3.0 | C-p
-1.5 | Escape
-1.5 | :
-3.0 | order
-1.5 | Escape
-3.0 | ?
+2.5 |                    |       | Your Jira board in the terminal — lanes by parent, columns from your config
+2.5 | g n                | g n   | flatten the lanes: one column per status
+1.2 | j                  | j k   | h j k l walks the board — one press, one card
+1.2 | l                  | h l   | …sideways too, into the next column
+3.0 | L                  | ⇧L    | moves the card right: In Progress → In Review, a real Jira transition
+2.5 | L                  | ⇧L    | again — In Review → Done
+2.5 | H                  | ⇧H    | and back out of Done
+2.5 | J                  | ⇧J    | re-ranks the card inside its column (⇧K goes up)
+2.5 | S                  | ⇧S    | picks a status directly, from anywhere
+1.5 | Escape             | esc   | backs out of any prompt
+2.5 | a                  | a     | reassigns — edits are optimistic, reverted if Jira says no
+1.5 | Escape             | esc   |
+1.5 | h k                | h k   | over to the parent story
+3.0 | Enter              | ↵     | opens the issue: fields, description as Markdown, children
+3.0 | z h                | z h   | unfolds the history — who changed what, when
+1.5 | Escape             | esc   |
+2.5 | g r                | g r   | lanes the board by sprint (g p by parent, g t by type)
+2.5 | g n v g            | v g   | trays each parent's sub-tasks in a basket
+2.0 | /                  | /     | narrows what is loaded…
+3.0 | @me Space -is:done |       | …with one small query language
+1.5 | Escape Escape      | esc   |
+2.0 | :                  | :     | runs the same grammar against all of Jira — or raw JQL
+3.0 | order              |       |
+1.5 | Escape             | esc   |
+3.0 | C-p                | ^P    | lists every action available right now, with its key
+1.5 | Escape             | esc   |
+4.0 | ?                  | ?     | shows the whole keymap. Nothing has to be memorised.
