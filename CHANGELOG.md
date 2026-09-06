@@ -6,6 +6,22 @@ All notable changes to lane are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.1.1] — 2026-09-06
+
+### Added
+
+- Homebrew (`brew install candril/tap/lane`) and Nix (`nix run github:candril/lane`) via
+  [candril/homebrew-tap](https://github.com/candril/homebrew-tap), alongside the curl installer.
+  All three install the release binary, verified against `SHA256SUMS`.
+- The installer, build script and release workflow shared with the sibling tools; a released
+  binary reports its tag, and the release writes `release.json` for the Nix flake.
+
+### Changed
+
+- The README and docs site carry the shared spec-driven notice, the same install section as
+  the sibling tools, and a footer linking them.
+- Demo gif paced by caption, with the moved card ringed; docs screenshots with solid scrollbars.
+
 ## [0.1.0] — 2026-09-05
 
 First public release.
@@ -52,5 +68,6 @@ First public release.
 - Command palette (`^P`) with every action, and a shortcut dialog (`?`).
 - `lane --mock` opens an offline demo board.
 
-[Unreleased]: https://github.com/candril/lane/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/candril/lane/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/candril/lane/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/candril/lane/releases/tag/v0.1.0
