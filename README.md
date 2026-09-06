@@ -6,6 +6,8 @@
 
 <p align="center">Your Jira board, in the terminal. Read it, move it, and never touch the mouse.</p>
 
+<p align="center"><a href="https://candril.github.io/lane/"><strong>Documentation</strong></a> · <a href="https://candril.github.io/lane/guide/installation/">Install</a> · <a href="https://candril.github.io/lane/reference/key-bindings/">Key bindings</a> · <a href="https://candril.github.io/lane/reference/filtering/">Filtering &amp; search</a></p>
+
 > [!CAUTION]
 > **Spec-driven, AI-generated.** Every feature in lane starts as a numbered spec in [`specs/`](specs/), and the code and this documentation were generated from those specs with an AI pair. Use it with care: lane *writes* to Jira Cloud — transitions, assignments, labels, ranks. Start with `lane --mock`, then a board you don't mind poking at.
 
