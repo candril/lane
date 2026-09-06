@@ -20,3 +20,6 @@ tsconfig.tsbuildinfo
 
 # Local-only just recipes
 local.just
+
+# Nix: the flake is deliberately unlocked (see flake.nix)
+flake.lock

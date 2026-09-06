@@ -24,14 +24,12 @@ hero:
 import { CardGrid, Card, Aside } from '@astrojs/starlight/components'
 
 <Aside type="caution">
-lane is young and built spec-first — every feature traces to a numbered spec in
-[`specs/`](https://github.com/candril/lane/tree/main/specs). It talks to **Jira Cloud** over the
-REST API and it *writes*. Try it against a board you don't mind poking at, and expect rough edges.
+**Spec-driven, AI-generated.** Every feature in lane starts as a numbered spec in [`specs/`](https://github.com/candril/lane/tree/main/specs), and the code and this documentation were generated from those specs with an AI pair. Use it with care: lane *writes* to Jira Cloud — transitions, assignments, labels, ranks. Start with `lane --mock`, then a board you don't mind poking at.
 </Aside>
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/candril/lane/main/scripts/install.sh | bash
-lane --mock      # the offline demo board, no Jira needed
+brew install candril/tap/lane           # or: nix run github:candril/lane
+lane --mock                             # the offline demo board — no Jira needed
 ```
 
 ![The README demo](../../assets/lane-demo.gif)
@@ -138,7 +136,9 @@ every action works on it.
 ## Install
 
 ```sh
+brew install candril/tap/lane            # or: nix run github:candril/lane
 curl -fsSL https://raw.githubusercontent.com/candril/lane/main/scripts/install.sh | bash
 ```
 
-See the [installation guide](/lane/guide/installation/) for credentials and first run.
+See the [installation guide](/lane/guide/installation/) for the Nix flake, the installer's
+variables, requirements and first run.

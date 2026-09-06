@@ -5,20 +5,18 @@
  * Build the standalone binary — for this machine by default, for every supported
  * platform with `--all`, or for one platform when CI sets BUILD_TARGET_OS/ARCH.
  *
- * A plain `bun build --compile` produces a binary whose Markdown descriptions
- * (specs/007) render as raw text: OpenTUI highlights them through a tree-sitter
- * worker, and `new Worker(…)` inside a dependency is not something the bundler can
- * follow, so the worker is missing from the binary and every highlight fails.
+ * A plain `bun build --compile` produces a binary in which nothing is syntax-highlighted:
+ * OpenTUI highlights through a tree-sitter worker, and `new Worker(…)` inside a dependency
+ * is not something the bundler can follow, so the worker is missing from the binary and
+ * every highlight fails silently. The worker is therefore passed as a second entrypoint,
+ * and OpenTUI is handed the path it will live at inside the binary through the
+ * compile-time constant it reads.
  *
- * The fix (riff's, by way of opencode): pass the worker as a second **entrypoint**, so
- * it is bundled with its own dependencies (`web-tree-sitter`), and hand OpenTUI the
- * path it will live at inside the binary through the compile-time constant it reads.
- * The grammar `.wasm` and query files come along on their own, because they are
- * ordinary file imports the bundler *can* follow.
+ * This file is generated from candril/homebrew-tap/templates/build.ts; edit it there.
  */
 
-import { basename, relative, resolve } from "path"
-import { realpathSync } from "fs"
+import { basename, relative, resolve } from "node:path"
+import { realpathSync } from "node:fs"
 import { $ } from "bun"
 
 interface Target {
@@ -36,10 +34,9 @@ const ALL_TARGETS: Target[] = [
 const projectDir = resolve(import.meta.dir, "..")
 process.chdir(projectDir)
 
-const args = Bun.argv.slice(2)
-const buildAll = args.includes("--all")
-const envOs = process.env.BUILD_TARGET_OS as Target["os"] | undefined
-const envArch = process.env.BUILD_TARGET_ARCH as Target["arch"] | undefined
+const buildAll = Bun.argv.slice(2).includes("--all")
+const envOs = process.env["BUILD_TARGET_OS"] as Target["os"] | undefined
+const envArch = process.env["BUILD_TARGET_ARCH"] as Target["arch"] | undefined
 
 const targets: Target[] =
   envOs && envArch
@@ -55,33 +52,35 @@ if (targets.length === 0) {
 
 const workerPath = realpathSync(resolve(projectDir, "node_modules/@opentui/core/parser.worker.js"))
 // Bun lays an entrypoint down at its path relative to the project root; the bunfs root
-// is the same on every platform lane builds for (no Windows target).
+// is the same on every platform built here (no Windows target).
 const workerInBinary = `/$bunfs/root/${relative(projectDir, workerPath).replaceAll("\\", "/")}`
 
 /**
- * The version stamped into the binary: the package version, plus the short commit
- * when this is not a tagged release build — so a binary built from a working tree
- * says which one, while `v0.1.0` reports exactly `0.1.0`.
+ * The version stamped into the binary. A tag build reports the tag alone: the release is
+ * named by the tag, and package.json would disagree with it the moment either drifts
+ * (`just release` checks them against each other before tagging). Any other build keeps
+ * the short commit, which is the only way to tell two dev binaries apart.
  */
-async function laneVersion(): Promise<string> {
+async function stampedVersion(): Promise<string> {
+  const tag = process.env["GITHUB_REF_NAME"]
+  if (process.env["GITHUB_REF_TYPE"] === "tag" && tag?.startsWith("v")) {
+    return tag.slice(1)
+  }
   const { version } = (await Bun.file(resolve(projectDir, "package.json")).json()) as {
     version: string
-  }
-  if (process.env.GITHUB_REF_TYPE === "tag") {
-    return version
   }
   const git = Bun.spawnSync(["git", "rev-parse", "--short", "HEAD"])
   const commit = git.exitCode === 0 ? git.stdout.toString().trim() : ""
   return commit ? `${version}+${commit}` : version
 }
 
-const version = await laneVersion()
+const version = await stampedVersion()
 await $`mkdir -p dist`
 
 // A local single-target build is what `just install-bin` copies, so it is plain
 // `dist/lane`; CI and `--all` builds carry the platform in the name. (Copying the
-// file afterwards is not an option: macOS refuses to run the copy of a compiled
-// binary until it is re-signed.)
+// file afterwards is not an option: macOS refuses to run the copy of a compiled binary
+// until it is re-signed.)
 const localBuild = targets.length === 1 && !envOs
 
 for (const target of targets) {

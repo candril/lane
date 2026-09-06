@@ -5,23 +5,46 @@ description: Install lane, point it at your Jira instance, and run it.
 
 ## Install
 
-Prebuilt binaries for macOS (Apple Silicon and Intel) and Linux (x64 and arm64):
+Prebuilt binaries for macOS (Apple Silicon and Intel) and Linux (x64 and arm64), by any of three
+routes. All three install the same binary: the one attached to the latest
+[release](https://github.com/candril/lane/releases), verified against its `SHA256SUMS`.
+
+### Homebrew
+
+```sh
+brew install candril/tap/lane
+```
+
+The tap is [candril/homebrew-tap](https://github.com/candril/homebrew-tap); `brew upgrade` picks
+up new releases.
+
+### Nix
+
+```sh
+nix run github:candril/lane                 # run it once
+nix profile install github:candril/lane     # keep it
+```
+
+Or as a flake input — `inputs.lane.url = "github:candril/lane"`, then
+`inputs.lane.packages.${system}.default`. The flake is deliberately unlocked and re-exports
+the package from the tap, so it always resolves to the latest release.
+
+### Installer script
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/candril/lane/main/scripts/install.sh | bash
 ```
 
-The installer detects your platform, downloads the latest
-[release](https://github.com/candril/lane/releases), verifies its checksum, and puts `lane` in
-`/usr/local/bin`. Two variables change that:
+The installer detects your platform, downloads the latest release, verifies its SHA256 against the
+release's `SHA256SUMS`, and puts `lane` in `/usr/local/bin`. Two variables change that:
 
 ```sh
-LANE_INSTALL_DIR=~/.local/bin  …   # somewhere else on your PATH
-LANE_VERSION=0.1.0 …               # a specific release
+LANE_INSTALL_DIR=~/.local/bin …   # somewhere else on your PATH
+LANE_VERSION=0.1.0 …              # a specific release
 ```
 
-Or download the archive for your platform from the releases page by hand, `gunzip` it, and put
-it on your `PATH`.
+Or download `lane-<os>-<arch>.gz` from the releases page by hand, `gunzip` it, and put it on
+your `PATH`.
 
 ### From source
 

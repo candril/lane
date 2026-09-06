@@ -7,11 +7,11 @@
 <p align="center">Your Jira board, in the terminal. Read it, move it, and never touch the mouse.</p>
 
 > [!CAUTION]
-> lane is young, spec-first, and was largely written with an AI pair. It talks to **Jira Cloud** over the REST API and it *writes* — transitions, assignments, labels, ranks. Try it on a board you don't mind poking at, and expect rough edges.
+> **Spec-driven, AI-generated.** Every feature in lane starts as a numbered spec in [`specs/`](specs/), and the code and this documentation were generated from those specs with an AI pair. Use it with care: lane *writes* to Jira Cloud — transitions, assignments, labels, ranks. Start with `lane --mock`, then a board you don't mind poking at.
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/candril/lane/main/scripts/install.sh | bash
-lane --mock        # the offline demo board — no Jira needed
+brew install candril/tap/lane           # or: nix run github:candril/lane
+lane --mock                             # the offline demo board — no Jira needed
 ```
 
 <img src="site/src/assets/lane-demo.gif" alt="lane demo" width="100%" />
@@ -94,18 +94,24 @@ Create (`n` / `⇧N`), rename (`e`), edit title and body in `$EDITOR` (`i`), ass
 
 ## Install
 
-Binaries for macOS (Apple Silicon, Intel) and Linux (x64, arm64):
+```sh
+brew install candril/tap/lane
+```
+
+```sh
+nix run github:candril/lane              # try it; `nix profile install github:candril/lane` keeps it
+```
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/candril/lane/main/scripts/install.sh | bash
 ```
 
-The installer verifies the checksum and puts `lane` in `/usr/local/bin` (`LANE_INSTALL_DIR` to change that, `LANE_VERSION` to pin one). Or download from [Releases](https://github.com/candril/lane/releases), or build from source with [Bun](https://bun.sh):
+All three install the same binary — the one attached to the latest
+[release](https://github.com/candril/lane/releases), verified against its `SHA256SUMS` — prebuilt
+for macOS (Apple Silicon, Intel) and Linux (x64, arm64). The installer puts it in `/usr/local/bin`;
+`LANE_INSTALL_DIR=~/.local/bin` moves it, `LANE_VERSION=0.1.0` pins it.
 
-```sh
-git clone https://github.com/candril/lane.git
-cd lane && bun install && just build     # → dist/lane
-```
+From source, with [Bun](https://bun.sh): `git clone https://github.com/candril/lane.git && cd lane && bun install && just install-bin`.
 
 ## Setup
 
@@ -239,3 +245,7 @@ Specs for every feature live in [`specs/`](./specs/); the docs site source in [`
 ## License
 
 MIT
+
+---
+
+<p align="center"><sub>One of five terminal tools from <a href="https://github.com/candril">candril</a> — one spec-first process, the same three installers:<br><a href="https://candril.github.io/lane/">lane</a> (Jira) · <a href="https://candril.github.io/monq/">monq</a> (MongoDB) · <a href="https://candril.github.io/presto/">presto</a> (pull requests) · <a href="https://candril.github.io/riff/">riff</a> (code review) · <a href="https://candril.github.io/topiq/">topiq</a> (Kafka)</sub></p>
