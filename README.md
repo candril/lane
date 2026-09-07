@@ -232,6 +232,15 @@ Repeating a field ORs within it, different fields AND across, `-` negates, quote
 - **UI**: [OpenTUI](https://github.com/sst/opentui) (React reconciler for the terminal), React 19
 - **Language**: TypeScript
 
+## The other terminal tools
+
+lane is one of five, built the same way and installed the same way (`brew install candril/tap/<tool>`, `nix run github:candril/<tool>`, or the curl installer):
+
+- [**monq**](https://candril.github.io/monq/) — Browse, query, edit. MongoDB without leaving the terminal.
+- [**presto**](https://candril.github.io/presto/) — Every open PR across the repos you watch, in one list — and whose move it is.
+- [**riff**](https://candril.github.io/riff/) — Review the diff where you wrote it: PRs, branches and working-copy changes, with vim motions and inline comments.
+- [**topiq**](https://candril.github.io/topiq/) — Peek, filter, replay. Kafka without leaving the terminal.
+
 ## Development
 
 ```sh
