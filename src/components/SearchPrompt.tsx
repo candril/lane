@@ -124,8 +124,8 @@ export function SearchPrompt({ state, scopeLabel, suggestions, onQueryChange }: 
               "↑↓ ^y/tab complete · esc"
             ) : (
               <span>
-                {pending ? "↵ run" : "↵ open"} · ^V view · ^T keep as tab · ^O browser · ^Y/^U copy
-                key/url · ^A {scoped ? "all of Jira" : "back to scope"} · esc
+                {pending ? "↵ run" : "↵ open"} · ^T keep as tab · ^O browser · ^Y/^U copy key/url ·
+                ^A {scoped ? "all of Jira" : "back to scope"} · esc
               </span>
             )}
           </text>

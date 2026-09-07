@@ -34,6 +34,9 @@ is per-card transient state rather than a rule. This is the rule.
 - **Nothing silently vanishes**: a parent that is not showing children says so on its card
   — `✓ N done` when they are finished, `▸ N subtasks` otherwise (the marker
   [042](./042-fold-subtasks.md) already had, now shared by both causes).
+- **The viewer honours it too** ([057](./057-detail-navigation.md)): `hide-done` keeps
+  the finished children out of its list under the same `✓ N done` marker, and `none`
+  starts the section folded, where the heading already carries the count.
 - **Composes with every layout** ([051](./051-parent-baskets.md), 008): a basket with no
   children left is not drawn, a checklist with none falls back to a plain card, and one
   hiding only *some* of its rows carries the marker as a final muted row (it reads as a

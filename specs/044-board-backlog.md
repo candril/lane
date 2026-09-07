@@ -90,6 +90,8 @@ real To Do work. There is no way today to say "these statuses exist, but they ar
   the board tab too. A row carries the same info as the list row ([017](./017-view-modes.md)):
   type glyph, key, summary, status, priority, assignee, plus epic/label tags
   ([039](./039-card-decoration-visibility.md)).
+- **A marked block stops at the divider** ([056](./056-bulk-edit.md)): crossing it is a status
+  change, and a bulk transition is `⇧S` over the selection, not a reorder.
 - **`⇧J`/`⇧K` cross the divider**: ranking off the end of a segment moves the issue into the other
   one — into the first column, or back to the backlog status nearest it — which is what dragging
   an issue over the divider does in Jira. Within a segment they rank as before.

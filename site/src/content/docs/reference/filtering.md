@@ -140,7 +140,7 @@ when you know it.
 | Keys | Action |
 | --- | --- |
 | `↑` `↓` `^Y` `tab` | complete an open field (`epic:`, `#`, `@`) |
-| `↵` | open the result — jumps to the card if this board already has it |
+| `↵` | open the result — and put the cursor on its card, if this board has one |
 | `^T` | keep the whole result set as a tab |
 | `^O` | open it in the browser |
 | `^Y` / `^U` | copy its key / URL |

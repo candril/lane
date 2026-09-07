@@ -6,6 +6,7 @@ import type { Draft } from "./useCreateDraft"
 import type { Editing } from "./useDialogs"
 import type { Board as BoardModel } from "./types"
 import type { ChildVisibility, SubtaskLayout } from "./config/types"
+import { rankPlan } from "./rank"
 import type { BoardProvider } from "./providers/provider"
 import type { TabMode } from "./tabs"
 
@@ -68,14 +69,14 @@ export interface BoardKeymapContext {
   anchorRow: (key: string) => void
   /** Global search (specs/046). */
   searching: boolean
+  /** Whether an issue is in the multi-select — a marked block ranks as one (specs/056). */
+  marked: (key: string) => boolean
   /** The highlighted result's key, for the actions that need nothing but a key. */
   searchResultKey: string | null
   startSearch: () => void
   cancelSearch: () => void
   moveSearchCursor: (direction: -1 | 1) => void
   submitSearch: () => void
-  /** ^V in the search prompt: show the highlighted result in the viewer (specs/057). */
-  viewSearchResult: () => void
   toggleSearchScope: () => void
   /** Keep the running search as a query-backed tab (specs/047). */
   keepSearchAsTab: () => void
@@ -111,7 +112,7 @@ export interface BoardKeymapContext {
   toggleMark: () => void
   /** ^A: mark the ring around the cursor; again widens it (specs/055). */
   expandSelection: () => void
-  /** ⇧V in a row view: anchor a visual range at the cursor, or drop an active one. */
+  /** ⇧V in a row view: anchor a visual range at the cursor, or end one, keeping it. */
   toggleVisual: () => void
   exitVisual: () => void
   clearMarks: () => void
@@ -156,7 +157,7 @@ export interface BoardKeymapContext {
   handleJumpKey: (name: string) => void
   transition: (key: string, direction: -1 | 1, onApplied?: (next: BoardModel) => void) => void
   applyRank: (
-    key: string,
+    keys: string[],
     neighborKey: string,
     direction: -1 | 1,
     onApplied?: (next: BoardModel) => void,
@@ -302,11 +303,6 @@ export function useBoardKeymap(ctx: BoardKeymapContext) {
         // Keep the results as a tab (specs/047) — from there every action works,
         // because the results are a board like any other.
         ctx.keepSearchAsTab()
-        key.preventDefault()
-      } else if (key.ctrl && name === "v" && ctx.searchResultKey) {
-        // ^V shows the result in the viewer (specs/057). ↵ only does that when the
-        // result isn't loaded — on a loaded one it jumps to the card instead.
-        ctx.viewSearchResult()
         key.preventDefault()
       } else if (key.ctrl && "oyu".includes(name) && ctx.searchResultKey) {
         // The actions that need only a key work on a result that is on no board;
@@ -873,30 +869,31 @@ export function useBoardKeymap(ctx: BoardKeymapContext) {
       if (shift && (name === "j" || name === "k" || name === "down" || name === "up")) {
         const dir = name === "j" || name === "down" ? 1 : -1
         const focused = ctx.rows[ctx.listFocus]
-        // Anchor on the nearest row at the same level, both ways: a root skips nested
-        // sub-task rows so it reorders against the adjacent parent, and a sub-task
-        // skips anything that isn't a sibling — ranking it against the next parent
-        // would drop it wherever that parent sits in the global order, which among
-        // its siblings is arbitrary. Running out of siblings means it is already
-        // first or last, and the row stays where it is.
-        let j = ctx.listFocus + dir
-        if (focused && focused.depth === 0) {
-          while (ctx.rows[j] && ctx.rows[j]!.depth > 0) {
-            j += dir
-          }
-        } else if (focused) {
-          while (ctx.rows[j] && ctx.rows[j]!.task.parentKey !== focused.task.parentKey) {
-            j += dir
-          }
-        }
-        const neighbor = ctx.rows[j]
+        // Anchor on the nearest row at the same level that isn't itself moving, both
+        // ways: a root skips nested sub-task rows so it reorders against the adjacent
+        // parent, and a sub-task skips anything that isn't a sibling — ranking it
+        // against the next parent would drop it wherever that parent sits in the
+        // global order, which among its siblings is arbitrary. Running out of siblings
+        // means it is already first or last, and the row stays where it is. Marked
+        // rows move as one block, gathered at the cursor (specs/056).
+        const plan = rankPlan(ctx.rows, ctx.listFocus, dir, {
+          key: (row) => row.task.key,
+          sibling: (row, cursorRow) =>
+            cursorRow.depth === 0
+              ? row.depth === 0
+              : row.task.parentKey === cursorRow.task.parentKey,
+          marked: (row) => ctx.marked(row.task.key),
+        })
+        const neighbor = plan?.neighbor
         // Ranking past the end of a backlog segment moves the issue *across* the
         // divider instead — onto the board or off it (specs/044), which is what
         // dragging an issue over it does in Jira. The direction decides, not the
         // neighbouring row: with an empty first column there is no row to compare
         // against, and promoting into it has to keep working. Only whole issues
         // cross; a sub-task ranks among its siblings.
-        if (focused && focused.depth === 0 && focused.segment) {
+        // A block stops at the divider: crossing it is a status change (specs/044),
+        // and a bulk transition is `⇧S` over the selection, not a reorder.
+        if (focused && focused.depth === 0 && focused.segment && (plan?.keys.length ?? 1) === 1) {
           const leaving = neighbor?.segment !== focused.segment
           const to = dir < 0 ? "board" : "backlog"
           // Only a *status* backlog's divider is crossable by ranking. On a sprint
@@ -912,13 +909,13 @@ export function useBoardKeymap(ctx: BoardKeymapContext) {
             return
           }
         }
-        if (focused && neighbor && ctx.provider.rankTask) {
+        if (focused && plan && neighbor && neighbor.segment === focused.segment && ctx.provider.rankTask) {
           // Ride along with the issue: rebuilding the rows here would have to know how
           // this view builds them (the backlog's are segmented, specs/044), and getting
           // that wrong strands the cursor rows away — so name the issue and let App put
           // the cursor back once the new rows exist.
           ctx.anchorRow(focused.task.key)
-          ctx.applyRank(focused.task.key, neighbor.task.key, dir)
+          ctx.applyRank(plan.keys, neighbor.task.key, dir)
         }
       } else if (shift && (name === "l" || name === "h")) {
         const row = ctx.rows[ctx.listFocus]

@@ -85,7 +85,7 @@ const RIGHT: Group[] = [
       ["⇧D / ⇧U", "copy description (markdown) / title(s)"],
       ["space", "mark: bulk copy / edit"],
       ["^A", "mark siblings · again: cell, lane, board"],
-      ["⇧V", "visual range (list / viewer) · esc clears"],
+      ["⇧V", "visual range (list / viewer) · ⇧V keeps it, esc drops it"],
     ],
   },
   {
@@ -93,8 +93,7 @@ const RIGHT: Group[] = [
     items: [
       [":", "search Jira: words, a key, or JQL"],
       ["^A", "…scope: this board ↔ all of Jira"],
-      ["↵", "…jump to the result · view it if it isn't loaded"],
-      ["^V", "…view the result (description, fields)"],
+      ["↵", "…open the result (description, fields)"],
       ["↑↓ ^y/tab", "…complete an open field (`epic:`, `#`, `@`)"],
       ["^T", "…keep the results as a tab"],
       ["^O", "…open the result in the browser"],

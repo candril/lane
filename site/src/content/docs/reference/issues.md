@@ -17,6 +17,10 @@ The viewer is navigable. `j` / `k` (or `^N` / `^P`) walk its links — the paren
 child, each history entry. `↵` on a link drills into that issue; `⌫` backs out again, as many
 levels as you went. `/` filters the children. `gg` / `⇧G` jump to the first and last item.
 
+Finished issues read as finished here too — struck key, dimmed summary — and the children
+section follows the tab's child visibility: `v d` leaves the done ones out (with `✓ N done`
+under the list), `v n` starts the section folded.
+
 Every issue action works inside the viewer and targets whatever is selected there: `⇧S` on a
 child sets the child's status, `a` assigns it, `y` copies its key.
 
@@ -42,7 +46,7 @@ as a unified diff.
 | `⇧S` | set the status from the board's statuses |
 | `⇧R` | close as a reason — Jira's resolution — or change a closed issue's reason in hindsight |
 | `⇧H` / `⇧L` | move to the previous / next column |
-| `⇧J` / `⇧K` | re-rank |
+| `⇧J` / `⇧K` | re-rank — the whole selection moves as one block |
 
 Every one of these is optimistic: the card changes at once, and snaps back with a toast if Jira
 refuses. Moving a card into a column transitions the issue to that column's first status; into
@@ -59,7 +63,8 @@ checklists survive the round trip.
 
 `space` marks the issue under the cursor. `^A` marks its siblings; pressed again it widens to the
 cell, the lane, then the whole board. In the list and the viewer, `⇧V` starts a visual range that
-`j` / `k` extend. `esc` clears.
+`j` / `k` extend; a second `⇧V` ends the range and keeps what it covered as marks, while `esc`
+abandons it (and, pressed again, clears the marks too).
 
 ![Marked rows in the list](../../../assets/screenshots/multiselect.png)
 
@@ -68,6 +73,13 @@ issue, `a` assigns them all, `#` edits labels shared by all of them, `⇧E` re-l
 closes them as one reason. The palette names the target — *Set status of 3 selected…* — so
 there is no doubt what `↵` is about to do. Writes fan out per issue and revert individually,
 so one refusal doesn't undo the others.
+
+`⇧J` / `⇧K` re-rank the whole selection as one block, gathered at the cursor: marks scattered
+down a column become contiguous where the cursor sits on the first press, and step together
+after that. Rank is a column's own order, so only the marks in the cursor's column and at its
+level take part — the toast says how many were left elsewhere. This one is a single write and
+reverts whole: the issues are ranked relative to each other, so half of it is not a partial
+success but a different order.
 
 ## Copying
 

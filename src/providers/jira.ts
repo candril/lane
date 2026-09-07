@@ -643,13 +643,16 @@ export function createJiraProvider(config: JiraConfig): BoardProvider {
       })
     },
 
-    async rankTask(key: string, anchor: { before: string } | { after: string }): Promise<void> {
+    async rankTask(keys: string[], anchor: { before: string } | { after: string }): Promise<void> {
+      // The endpoint ranks the whole list against the anchor in one write, keeping the
+      // order given — which is what makes a marked block one request rather than one
+      // per issue, each racing the last (specs/056).
       const body =
         "before" in anchor
-          ? { issues: [key], rankBeforeIssue: anchor.before }
-          : { issues: [key], rankAfterIssue: anchor.after }
+          ? { issues: keys, rankBeforeIssue: anchor.before }
+          : { issues: keys, rankAfterIssue: anchor.after }
       const where = "before" in anchor ? `before ${anchor.before}` : `after ${anchor.after}`
-      await logRequest(`rank ${key} ${where}`, async () => {
+      await logRequest(`rank ${keys.join(", ")} ${where}`, async () => {
         // 204 on success — but a refused rank is a 207 whose body carries the errors,
         // and fetch's `ok` is true for 207. Without reading the body the failure is
         // silent: the optimistic order stands until the next refresh snaps it back.

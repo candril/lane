@@ -36,7 +36,15 @@ import { SearchPrompt, type SearchState } from "./components/SearchPrompt"
 import { buildSearchQuery } from "./search"
 import { copyToClipboard, openIssueInWindow, openUrl } from "./actions"
 import { openIssueEditor } from "./utils/editor"
-import { buildLanes, locate, nextStatus, type Grouping, type LaneOptions } from "./grouping"
+import {
+  buildLanes,
+  locate,
+  nextStatus,
+  type Grouping,
+  type HiddenChildren,
+  type LaneOptions,
+} from "./grouping"
+import { rankPlan } from "./rank"
 import { columnColor, statusGlyph } from "./utils/glyphs"
 import { theme } from "./theme"
 import type { PickItem } from "./components/Picker"
@@ -517,10 +525,12 @@ export function App({
     back: backDetail,
     load: loadDetail,
     patch: patchDetail,
+    refresh: refreshDetail,
   } = useIssueDetail(provider)
   // The viewer's children section folded away (`z a`, specs/057) — per issue, like
-  // the history: every issue opens with its children in view.
-  const [detailChildrenFolded, setDetailChildrenFolded] = useState(false)
+  // the history: every issue opens with its children in view, unless the tab is set to
+  // draw no children at all (`v n`, specs/052), which starts them folded.
+  const [detailChildrenFolded, setDetailChildrenFolded] = useState(children === "none")
   // The history section (specs/058) starts folded on every issue: it is a peek, not
   // a layout preference — one look shouldn't turn every next issue into a changelog.
   const [detailHistoryFolded, setDetailHistoryFolded] = useState(true)
@@ -533,8 +543,12 @@ export function App({
   // else — the tab's filter stays as it was, so closing the viewer changes nothing
   // behind it. Per issue, like the history fold.
   const [detailQuery, setDetailQuery] = useState("")
+  // `v n` folds the section wherever it is set — on the board before the issue is
+  // opened, or on the issue itself, where it would otherwise read as a dead key.
   useEffect(() => {
-    setDetailChildrenFolded(false)
+    setDetailChildrenFolded(children === "none")
+  }, [detail?.key, children])
+  useEffect(() => {
     setDetailHistoryFolded(true)
     setDetailHistoryAll(false)
     setDetailDiff(null)
@@ -564,6 +578,7 @@ export function App({
     historyCount: detailHistoryCount,
     sections: detailSections,
     itemKeys: detailItemKeys,
+    hiddenChildren: detailHiddenChildren,
   } = useMemo(() => {
     if (!detailTask) {
       return {
@@ -575,6 +590,7 @@ export function App({
         historyCount: 0,
         sections: {} as { children?: number; history?: number; more?: number },
         itemKeys: [] as string[],
+        hiddenChildren: undefined as HiddenChildren | undefined,
       }
     }
     const of = (
@@ -596,6 +612,7 @@ export function App({
           status: task ? (columnMeta.get(task.columnId)?.title ?? task.status ?? "—") : undefined,
           statusColor: task ? (columnMeta.get(task.columnId)?.color ?? theme.textDim) : undefined,
           statusGlyph: task ? statusGlyph(task.columnId, board.columns) : undefined,
+          done: task?.columnId === doneColumnId,
         },
       ]
     }
@@ -613,19 +630,25 @@ export function App({
     const fetched = fetchedChildren?.key === detailTask.key ? fetchedChildren.tasks : []
     const seen = new Set(fromBoard.map((t) => t.key))
     const family = [...fromBoard, ...fetched.filter((t) => !seen.has(t.key))]
+    // The tab's child visibility (specs/052) rules here too: `hide-done` keeps finished
+    // children out of the list, and what it withheld is said under it rather than
+    // silently missing. `none` folds the section instead of emptying it — the viewer is
+    // where you go to walk the children, so a fold you can open beats a dead list.
+    const listed =
+      children === "hide-done" ? family.filter((t) => t.columnId !== doneColumnId) : family
     // `/` narrows the children in the board's filter language (specs/020) but with
     // the viewer's own query, run over the family alone — so children the board never
     // loaded are judged on their own merits, and the board behind stays as it was.
     const shown = detailQuery
       ? new Set(
-          applyFilter({ ...board, tasks: family }, parseQuery(detailQuery), {
+          applyFilter({ ...board, tasks: listed }, parseQuery(detailQuery), {
             columns: [...board.columns, ...(board.backlog ?? [])],
             currentUser,
             subtaskScope,
           }).map((t) => t.key),
         )
       : null
-    const children = shown ? family.filter((t) => shown.has(t.key)) : family
+    const shownChildren = shown ? listed.filter((t) => shown.has(t.key)) : listed
     // The cursor's path, in drawing order (specs/057): the issue, the links up the
     // tree, then each section's heading and — unfolded — its rows. A heading is a stop
     // of its own, so a folded section can be reached and opened from the keyboard like
@@ -645,7 +668,7 @@ export function App({
       sections.children = itemKeys.length
       itemKeys.push("")
       if (!detailChildrenFolded) {
-        children.flatMap((child) => of(child, "child")).forEach(pushLink)
+        shownChildren.flatMap((child) => of(child, "child")).forEach(pushLink)
       }
     }
     const entries = detail?.history ?? []
@@ -665,9 +688,13 @@ export function App({
     }
     return {
       links,
-      childCount: children.length,
+      childCount: shownChildren.length,
       familyCount: family.length,
-      childKeys: children.map((t) => t.key),
+      childKeys: shownChildren.map((t) => t.key),
+      hiddenChildren:
+        family.length > shownChildren.length && !detailQuery
+          ? { count: family.length - shownChildren.length, done: children === "hide-done" }
+          : undefined,
       history,
       historyCount: entries.length,
       sections,
@@ -682,6 +709,8 @@ export function App({
     detailHistoryAll,
     board,
     columnMeta,
+    doneColumnId,
+    children,
     detailQuery,
     currentUser,
     subtaskScope,
@@ -694,6 +723,10 @@ export function App({
   // by the hook; a story the board holds needs nothing.
   const detailKey = detail?.key
   const onBoard = !!detailKey && board.tasks.some((t) => t.key === detailKey)
+  // Read at settle time, not through a render's closure: the write that lands may have
+  // been fired several renders ago.
+  const offBoardDetail = useRef<string | null>(null)
+  offBoardDetail.current = detailKey && !onBoard ? detailKey : null
   const fetchChildren = !!detailKey && (!onBoard || detailTask?.type === "epic")
   useEffect(() => {
     if (detailKey && fetchChildren) {
@@ -1000,8 +1033,12 @@ export function App({
   }
 
   /**
-   * Open the highlighted result: jump to it when this tab already shows it, else open
-   * it in the browser — the issue is somewhere lane isn't (specs/046).
+   * Open the highlighted result in the viewer (specs/046) — always, whether or not this
+   * tab holds the issue: you searched for it to read it, and a search that sometimes
+   * answers with a moved cursor and sometimes with the issue is a coin toss. Where the
+   * tab does hold it the cursor follows too, so closing the viewer lands on its card
+   * rather than back where the search started. Off-board issues are fetched first
+   * (specs/057); the browser stays one keystroke away as ^O.
    */
   function submitSearch() {
     // ↵ on a query waiting to run (JQL) runs it; ↵ on a result opens it.
@@ -1015,27 +1052,14 @@ export function App({
       return
     }
     const at = rows.findIndex((r) => r.task.key === chosen.key)
-    if (view !== "board" && at >= 0) {
+    if (at >= 0) {
       setListIndex(at)
-      return
     }
     const loc = locate(lanes, chosen.key)
-    if (view === "board" && loc) {
+    if (loc) {
       setCursor({ ...loc, onHeader: false })
-      return
     }
-    // Not on this board: show it in the viewer instead (specs/057), which fetches what
-    // the board never loaded. The browser stays one keystroke away as ^O.
     whenLoaded(chosen.key, () => openDetail(chosen.key))
-  }
-
-  /** ^V on a result: the viewer, even for an issue the board holds (specs/057). */
-  function viewSearchResult() {
-    const chosen = search?.results[search.index]
-    setSearch(null)
-    if (chosen) {
-      whenLoaded(chosen.key, () => openDetail(chosen.key))
-    }
   }
 
   /**
@@ -1117,6 +1141,7 @@ export function App({
 
   const {
     moveTo,
+    setStatusByName,
     submitResolution,
     transition,
     applyRank,
@@ -1135,11 +1160,26 @@ export function App({
     setBoard,
     provider,
     pendingMutations,
-    settleMutation,
+    settleMutation: settleWrite,
     showToast,
     editing,
     setEditing,
   })
+
+  /**
+   * Every write settles through here so a field edit against an issue the board does
+   * not hold still shows (specs/057): its optimistic update ran over board state,
+   * which has no copy of that issue, leaving the viewer on the values it was fetched
+   * with. Re-reading it also picks up what the server did beyond the field written —
+   * a resolution the workflow attached, the new changelog entry.
+   */
+  function settleWrite() {
+    settleMutation()
+    const key = offBoardDetail.current
+    if (key) {
+      refreshDetail(key)
+    }
+  }
 
   function moveFocusedCard(direction: -1 | 1) {
     if (!focusedKey) {
@@ -1153,39 +1193,43 @@ export function App({
     })
   }
 
-  /** Reorder the focused board card within its column against the adjacent card. */
+  /**
+   * Reorder the focused board card — or the marked block (specs/056) — within its
+   * column, against the adjacent card.
+   *
+   * The anchor is the nearest card at the same hierarchy level that is not itself
+   * moving. A parent nests its sub-tasks beneath it (checklist/under-parent layout),
+   * so the adjacent cell is often another parent's sub-task; a sub-task's neighbour
+   * past the end of its family is the next parent card, or — in `own-column` — any
+   * unrelated issue sharing that status. Ranking against either moves the issue to
+   * wherever *that* one sits in the global order, which among siblings is arbitrary:
+   * ⇧J on the last sub-task used to fling it back up the list.
+   */
   function rankFocusedCard(direction: -1 | 1) {
     const focused = activeCards[cursor.row]
     if (!focused || !focusedKey || !provider.rankTask) {
       return
     }
-    // Anchor on the nearest card at the same hierarchy level, in both directions. A
-    // parent nests its sub-tasks beneath it (checklist/under-parent layout), so the
-    // adjacent cell is often another parent's sub-task; a sub-task's neighbour past
-    // the end of its family is the next parent card, or — in `own-column` — any
-    // unrelated issue sharing that status. Ranking against either moves the issue to
-    // wherever *that* one sits in the global order, which among siblings is arbitrary:
-    // ⇧J on the last sub-task used to fling it back up the list.
-    let i = cursor.row + direction
-    if (focused.isSubtask) {
-      while (activeCards[i] && activeCards[i]!.task.parentKey !== focused.task.parentKey) {
-        i += direction
-      }
-    } else {
-      while (activeCards[i]?.isSubtask) {
-        i += direction
-      }
-    }
-    // No sibling that way: the issue is already first or last among them, so there is
-    // nothing to swap with and the cursor stays put.
-    const neighbor = activeCards[i]?.task
-    if (!neighbor) {
+    const plan = rankPlan(activeCards, cursor.row, direction, {
+      key: (card) => card.task.key,
+      sibling: (card, cursorCard) =>
+        cursorCard.isSubtask
+          ? card.isSubtask && card.task.parentKey === cursorCard.task.parentKey
+          : !card.isSubtask,
+      marked: (card) => selection.has(card.task.key),
+    })
+    if (!plan) {
       return
+    }
+    // Rank is a column's order, so a mark in another column or at another level has no
+    // place in this move — say so rather than leaving it looking half-applied.
+    if (selection.size > plan.keys.length) {
+      showToast(`${plan.keys.length} ranked · ${selection.size - plan.keys.length} elsewhere`)
     }
     // Follow the moved card by locating where it actually lands (like the column
     // move) — `row + direction` is wrong once buildLanes regroups, so the cursor
     // would strand on a sibling and the next reorder would grab the wrong card.
-    void applyRank(focusedKey, neighbor.key, direction, (next) => {
+    void applyRank(plan.keys, plan.neighbor.task.key, direction, (next) => {
       const loc = locate(buildLanes(next, grouping, laneOptions), focusedKey)
       if (loc) {
         setCursor({ ...loc, onHeader: false })
@@ -1253,10 +1297,24 @@ export function App({
     return `${verb} ${subject}${suffix}`
   }
 
+  /**
+   * The issue behind a key: the board's copy, else the copy the viewer fetched — an
+   * issue opened from search, or a child the board's query never matched, is on no
+   * board, and the field editors still have to read it to open on its current value
+   * (specs/057).
+   */
+  function taskFor(key: string): Task | undefined {
+    return (
+      board.tasks.find((t) => t.key === key) ??
+      (detail?.task?.key === key ? detail.task : undefined) ??
+      fetchedChildren?.tasks.find((t) => t.key === key)
+    )
+  }
+
   /** The field value all targeted issues share — a mixed set pre-selects nothing. */
   function sharedCurrent<T>(keys: string[], pick: (task: Task) => T): T | undefined {
     const values = keys.map((key) => {
-      const task = board.tasks.find((t) => t.key === key)
+      const task = taskFor(key)
       return task ? pick(task) : undefined
     })
     return values.every((v) => v === values[0]) ? values[0] : undefined
@@ -1264,7 +1322,7 @@ export function App({
 
   /** Labels every targeted issue carries — what a bulk label edit shows and diffs against. */
   function commonLabels(keys: string[]): string[] {
-    const [first, ...rest] = keys.map((key) => board.tasks.find((t) => t.key === key)?.labels ?? [])
+    const [first, ...rest] = keys.map((key) => taskFor(key)?.labels ?? [])
     return (first ?? []).filter((label) => rest.every((labels) => labels.includes(label)))
   }
 
@@ -1643,6 +1701,12 @@ export function App({
       return
     }
     const key = keys[0]!
+    // An issue the board doesn't hold has no card to move, and its status may not even
+    // be one of these columns — transition it by name instead (specs/057).
+    if (!board.tasks.some((t) => t.key === key)) {
+      void setStatusByName(key, chosen.label)
+      return
+    }
     void moveTo(key, chosen.value, (next) => {
       const loc = locate(buildLanes(next, grouping, laneOptions), key)
       if (loc) {
@@ -1944,15 +2008,24 @@ export function App({
       return
     }
     const children = detailLinks.filter((l) => l.kind === "child")
-    const at = children.findIndex((c) => c.key === detailSelected.key)
-    const neighbor = children[at + direction]
-    if (!neighbor) {
+    const plan = rankPlan(
+      children,
+      children.findIndex((c) => c.key === detailSelected.key),
+      direction,
+      {
+        key: (child) => child.key,
+        // Every row in the section is a child of the open issue — all siblings.
+        sibling: () => true,
+        marked: (child) => selection.has(child.key),
+      },
+    )
+    if (!plan) {
       return
     }
     // The list rebuilds from board order, so the moved child lands at the neighbour's
     // index — follow it, or the next ⇧J would grab whoever swapped into this slot.
-    setDetailFocus(neighbor.index)
-    void applyRank(detailSelected.key, neighbor.key, direction)
+    setDetailFocus(plan.neighbor.index)
+    void applyRank(plan.keys, plan.neighbor.key, direction)
   }
 
   /** Open the rename line for the focused issue, seeded with its current summary. */
@@ -1960,7 +2033,7 @@ export function App({
     if (!currentKey) {
       return
     }
-    const task = board.tasks.find((t) => t.key === currentKey)
+    const task = taskFor(currentKey)
     if (task) {
       setEditing({ key: currentKey, current: task.summary, submitting: false })
     }
@@ -2152,7 +2225,6 @@ export function App({
     cancelSearch: () => setSearch(null),
     moveSearchCursor,
     submitSearch,
-    viewSearchResult,
     toggleSearchScope,
     keepSearchAsTab,
     searchSuggestCount: searchSuggestions.length,
@@ -2162,6 +2234,7 @@ export function App({
     doRefresh,
     startJump,
     selectionCount: selection.size,
+    marked: (key: string) => selection.has(key),
     markedCount,
     visualActive,
     // In the viewer the mark lands on its selected item (specs/057), not the card
@@ -2220,11 +2293,13 @@ export function App({
             status={columnMeta.get(detailTask.columnId)?.title ?? detailTask.status ?? "—"}
             statusColor={columnMeta.get(detailTask.columnId)?.color ?? theme.textDim}
             statusGlyph={statusGlyph(detailTask.columnId, board.columns)}
+            done={detailTask.columnId === doneColumnId}
             links={detailLinks}
             focusIndex={detailIndex}
             jumpLabels={jump?.labels}
             childCount={detailChildCount}
             childrenFolded={detailChildrenFolded}
+            hiddenChildren={detailHiddenChildren}
             selectedKeys={selection}
             history={detailHistory}
             historyCount={detailHistoryCount}

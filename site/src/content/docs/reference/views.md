@@ -128,7 +128,7 @@ subtasks = "own-column"   # own-column | under-parent | checklist | basket
 
 Orthogonal to the layout: `v a` draws every child, `v d` hides the done ones so a long-lived
 story stops dragging its finished sub-tasks through the Done column, `v n` draws parents only.
-A parent says how many children it isn't showing.
+A parent says how many children it isn't showing. The issue viewer follows the same setting.
 
 ## Card decorations
 

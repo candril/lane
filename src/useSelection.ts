@@ -129,7 +129,20 @@ export function useSelection({
     return scope
   }
 
-  const toggleVisual = () => setAnchor((a) => (a == null ? (detail?.focus ?? listFocus) : null))
+  /**
+   * `⇧V`: anchor a range at the cursor, or end one — keeping what it covered. The
+   * range is derived from the anchor, so ending it has to absorb it into the marks or
+   * the walk you just made is thrown away; `esc` is the key that abandons it (specs/055).
+   */
+  const toggleVisual = () => {
+    if (anchor == null) {
+      setAnchor(detail?.focus ?? listFocus)
+      return
+    }
+    setMarked((prev) => new Set([...prev, ...selection]))
+    setAnchor(null)
+  }
+  /** Drop an active range without keeping it — `esc`, and the copy that spent it. */
   const exitVisual = () => setAnchor(null)
   const clearMarks = () => setMarked(new Set())
 

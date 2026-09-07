@@ -107,7 +107,7 @@ export interface BoardProvider {
    * Optional — a data source without a rank concept omits it, and the UI hides the
    * reorder gesture.
    */
-  rankTask?(key: string, anchor: { before: string } | { after: string }): Promise<void>
+  rankTask?(keys: string[], anchor: { before: string } | { after: string }): Promise<void>
   /**
    * Assign an issue to a user by an exact identifier (an `accountId` for Jira, a
    * display name for the mock), or unassign with `null`. The REST assignee

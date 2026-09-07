@@ -432,6 +432,27 @@ export function createMockProvider(data: MockData = sampleData()): BoardProvider
         task.resolution = resolution ?? RESOLUTIONS[0]!
       }
     },
+    /**
+     * The offline stand-in for a transition by status *name* (specs/047) — how a query
+     * tab moves an issue, and how the viewer moves one this board doesn't hold
+     * (specs/057). The seed's column titles are its statuses.
+     */
+    async transitionTo(key, status, resolution) {
+      const task = board.tasks.find((t) => t.key === key)
+      if (!task) {
+        throw new Error(`Unknown issue ${key}`)
+      }
+      const column = [...board.columns, ...(board.backlog ?? [])].find(
+        (c) => c.title.toLowerCase() === status.toLowerCase(),
+      )
+      if (!column) {
+        throw new Error(`No transition to ${status}`)
+      }
+      task.columnId = column.id
+      if (column.id === board.columns[board.columns.length - 1]?.id) {
+        task.resolution = resolution ?? RESOLUTIONS[0]!
+      }
+    },
     defaultResolution: RESOLUTIONS[0],
     async listResolutions() {
       return [...RESOLUTIONS]
@@ -471,22 +492,34 @@ export function createMockProvider(data: MockData = sampleData()): BoardProvider
       task.epicKey = epicKey ?? undefined
       task.epicName = epicKey ? board.tasks.find((t) => t.key === epicKey)?.summary : undefined
     },
-    async rankTask(key, anchor) {
-      const from = board.tasks.findIndex((t) => t.key === key)
+    async rankTask(keys, anchor) {
       const anchorKey = "before" in anchor ? anchor.before : anchor.after
-      if (from < 0 || !board.tasks.some((t) => t.key === anchorKey)) {
-        throw new Error(`Unknown issue ${key} or anchor ${anchorKey}`)
+      const moving = keys.map((key) => {
+        const task = board.tasks.find((t) => t.key === key)
+        if (!task || keys.includes(anchorKey)) {
+          throw new Error(`Unknown issue ${key} or anchor ${anchorKey}`)
+        }
+        return task
+      })
+      if (!board.tasks.some((t) => t.key === anchorKey)) {
+        throw new Error(`Unknown anchor ${anchorKey}`)
       }
-      const [moved] = board.tasks.splice(from, 1)
+      board.tasks = board.tasks.filter((t) => !keys.includes(t.key))
       const at = board.tasks.findIndex((t) => t.key === anchorKey)
-      board.tasks.splice("before" in anchor ? at : at + 1, 0, moved!)
+      board.tasks.splice("before" in anchor ? at : at + 1, 0, ...moving)
     },
     async assignTask(key, assignee) {
       const task = board.tasks.find((t) => t.key === key)
       if (!task) {
         throw new Error(`Unknown issue ${key}`)
       }
-      task.assignee = assignee ?? undefined
+      // The picker hands over an account id (`withAssigneeIds` minted it from the name);
+      // Jira stores the person and reads a display name back, so undo the slug rather
+      // than let the seed keep `acct-…` as somebody's name.
+      const named = board.tasks.find(
+        (t) => t.assignee && `acct-${slugName(t.assignee)}` === assignee,
+      )
+      task.assignee = named?.assignee ?? assignee ?? undefined
     },
     async createIssue({ type, summary, parentKey, epicKey }) {
       const task: Task = {

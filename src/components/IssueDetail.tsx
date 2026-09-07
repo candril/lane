@@ -5,6 +5,7 @@ import { markdownStyle, markdownTreeSitter } from "../markdown-style"
 import { priorityGlyph, typeGlyph } from "../utils/glyphs"
 import type { DetailState } from "../useIssueDetail"
 import type { DetailHistoryRow } from "../history"
+import type { HiddenChildren } from "../grouping"
 import type { IssueType, Task } from "../types"
 import { Avatar } from "./Avatar"
 import { JumpGlyph } from "./JumpTag"
@@ -24,6 +25,8 @@ export interface DetailLink {
   status?: string
   statusColor?: string
   statusGlyph?: string
+  /** Finished work: struck through and dimmed, as the card and the list row draw it. */
+  done?: boolean
   index: number
 }
 
@@ -34,6 +37,8 @@ interface IssueDetailProps {
   status: string
   statusColor: string
   statusGlyph: string
+  /** In the done column: the key reads struck through, as it does on its card. */
+  done: boolean
   /** The issues this one links to, drawn in list order (specs/057). */
   links: DetailLink[]
   /** Which item the viewer's cursor is on: 0 the issue itself, else a link's `index`. */
@@ -44,6 +49,8 @@ interface IssueDetailProps {
   childCount: number
   /** The children section folded away (`z a`): heading only, no rows (specs/057). */
   childrenFolded: boolean
+  /** Children the visibility setting is keeping out of the list (specs/052). */
+  hiddenChildren?: HiddenChildren
   /** Keys in the multi-select (specs/055) — the same set the board tints. */
   selectedKeys?: Set<string>
   /** The changelog rows drawn (specs/058) — empty while the section is folded. */
@@ -125,8 +132,13 @@ function LinkRow({
       <box flexGrow={1} flexShrink={1} marginRight={1}>
         <text>
           <JumpGlyph label={jumpLabel} char={type.char} color={type.color} />
-          <span fg={emphasis ? theme.warning : theme.textDim}>{link.key} </span>
-          <span fg={theme.text}>{link.summary}</span>
+          <span
+            fg={emphasis ? theme.warning : theme.textDim}
+            attributes={link.done ? TextAttributes.STRIKETHROUGH : undefined}
+          >
+            {link.key}
+          </span>
+          <span fg={link.done ? theme.textDim : theme.text}> {link.summary}</span>
         </text>
       </box>
       {link.status && (
@@ -164,11 +176,13 @@ export const IssueDetail = forwardRef<ScrollBoxRenderable, IssueDetailProps>(fun
     status,
     statusColor,
     statusGlyph,
+    done,
     links,
     focusIndex,
     jumpLabels,
     childCount,
     childrenFolded,
+    hiddenChildren,
     selectedKeys,
     history,
     historyCount,
@@ -213,11 +227,13 @@ export const IssueDetail = forwardRef<ScrollBoxRenderable, IssueDetailProps>(fun
           <text>
             <span
               fg={focusIndex === 0 && marked(task.key) ? theme.warning : theme.primary}
-              attributes={TextAttributes.BOLD}
+              attributes={
+                done ? TextAttributes.BOLD | TextAttributes.STRIKETHROUGH : TextAttributes.BOLD
+              }
             >
               {task.key}
             </span>
-            <span fg={theme.text}> {task.summary}</span>
+            <span fg={done ? theme.textDim : theme.text}> {task.summary}</span>
           </text>
         </box>
       </box>
@@ -292,6 +308,17 @@ export const IssueDetail = forwardRef<ScrollBoxRenderable, IssueDetailProps>(fun
                 {linkRow(child)}
               </box>
             ))}
+            {!!hiddenChildren && !childrenFolded && (
+              // The card's marker, as a note under the list: children kept out by the
+              // visibility setting read as hidden, never as absent (specs/052).
+              <box paddingLeft={2}>
+                <text fg={theme.textMuted}>
+                  {hiddenChildren.done
+                    ? `✓ ${hiddenChildren.count} done`
+                    : `▸ ${hiddenChildren.count} hidden`}
+                </text>
+              </box>
+            )}
           </box>
         )}
         {sections.history !== undefined && (

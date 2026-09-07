@@ -40,13 +40,15 @@ second, competing prompt.
   shows nothing but complaints about the query you are still writing. Words and keys stay live.
 - **Latest-wins, debounced.** A request counter drops a slow early answer that lands after a
   fast late one; keystrokes wait ~180 ms before becoming a query.
-- **Enter jumps if the issue is on this tab**, else shows it in the viewer
-  ([057](./057-detail-navigation.md) fetches what the board never loaded); `^V` shows any
-  result in the viewer; `^O` opens the browser either
-  way, `^Y` copies its key and `^U` its URL. Those are the actions that need nothing but a key —
-  everything else (`⇧S`, `a`, `e`, `⇧E`) runs through the mutation layer against
-  `board.tasks`, and a result is on no board. Ctrl-keyed because a plain letter would be
-  typed into the query.
+- **Enter opens the result in the viewer**, on this tab or not
+  ([057](./057-detail-navigation.md) fetches what the board never loaded) — you searched for
+  the issue to read it, and a key that answers with a moved cursor on some results and with
+  the issue on others is a coin toss. The cursor still follows to the card where this tab has
+  one, so closing the viewer lands on it. `^O` opens the browser either
+  way, `^Y` copies its key and `^U` its URL. Ctrl-keyed because a plain letter would be
+  typed into the query. The field edits (`⇧S`, `a`, `e`, `⇧E`, `#`) are reached through the
+  viewer rather than the prompt, and work there on a result the board never loaded
+  ([057](./057-detail-navigation.md)).
 - **The rest of the actions wait for the result tab** (P2): once a search can back a source,
   its results *are* a board and every action works unchanged — no per-action plumbing in the
   palette, which would be the same code twice.
@@ -146,4 +148,4 @@ second, competing prompt.
 | `src/components/SearchPrompt.tsx` | The prompt + result list (built on `Picker`) |
 | `src/useBoardKeymap.ts` | `:` opens it; result actions |
 | `src/components/ShortcutHelp.tsx` | A "Find" group: `:`, `^A`, `↵`, and `s` beside them |
-| `src/App.tsx` | Own the prompt state; jump-if-loaded |
+| `src/App.tsx` | Own the prompt state; open the result in the viewer |

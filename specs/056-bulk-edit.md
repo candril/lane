@@ -27,6 +27,9 @@ Nothing new to learn: the same keys, the same pickers, the same palette submenus
 - **Pre-selection follows the shared value**: the picker highlights the current status
   /assignee/epic/reason only when every selected issue agrees; a mixed set pre-selects
   nothing rather than lying about one of them.
+- **Rank is the exception to per-issue revert**: `rankTask` takes the whole block in one
+  request, and the issues are ranked *relative to each other*, so a half-applied order is
+  not a partial success — it reverts whole, like a single-issue rank always did.
 - **One optimistic update, per-issue writes, per-issue revert.** The board updates
   once; the provider is called once per issue; only the issues whose write failed
   revert. One toast carries the whole outcome: `3 moved`, or
@@ -45,8 +48,22 @@ Nothing new to learn: the same keys, the same pickers, the same palette submenus
 
 ### P3 — Nice to Have
 
-- **Bulk rank/move-adjacent** (`⇧H`/`⇧L`, `⇧J`/`⇧K` over a selection) — stepping many
-  issues relative to their own positions; wants its own ordering semantics.
+- ~~**Bulk rank/move-adjacent** (`⇧H`/`⇧L`, `⇧J`/`⇧K` over a selection) — stepping many
+  issues relative to their own positions; wants its own ordering semantics.~~
+  **Resolved for rank:** `⇧J`/`⇧K` move the marked issues as **one block, gathered at the
+  cursor** — the block lands one non-moving sibling further in that direction than the
+  cursor sat, so a scattered selection becomes contiguous on the first press and steps as a
+  unit after that. The alternative, each mark stepping past its own neighbour (the editor's
+  "move line down"), keeps the set scattered forever and reads on a board as several
+  unrelated cards twitching at once. Rank is a column's own order, so only the marks in the
+  cursor's column and at its hierarchy level take part, and the toast says how many were
+  left elsewhere (`3 ranked · 2 elsewhere`); the cursor's card anchors the move whether or
+  not it is itself marked, which makes an unmarked cursor read as "bring them here". The
+  ordering rule is one pure function ([`src/rank.ts`](../src/rank.ts)) so the board, the row
+  views and the viewer's children cannot drift apart on it.
+  `⇧H`/`⇧L` over a selection stays out: crossing the backlog divider by ranking is a status
+  change ([044](./044-board-backlog.md)), and a bulk transition is `⇧S`, not a reorder — so
+  a block stops at the divider.
 
 ## Out of Scope
 

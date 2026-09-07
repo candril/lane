@@ -26,8 +26,11 @@ viewer** — superseding [007](./007-card-detail-view.md)'s `⇧V` binding.
   ([057](./057-detail-navigation.md)). On a lane header it keeps folding, since a
   header can't be marked.
 - **`⇧V` anchors a visual range** in the row views (nvim's `V`): `j`/`k` extend it from
-  the anchor, `esc` or a second `⇧V` drops it. On the board grid there is no linear
-  order to extend along, so `⇧V` does nothing there.
+  the anchor, a second `⇧V` ends it *keeping* what it covered — the range is absorbed
+  into the marks — and `esc` abandons it. Ending and abandoning have to be different
+  keys: the range is derived from the anchor, so without the absorb step the walk you
+  just made is thrown away by the key that reads as "done". On the board grid there is
+  no linear order to extend along, so `⇧V` does nothing there.
 - **`^A` marks the ring around the cursor, and again widens it.** Each press marks
   the innermost ring that isn't already whole: in a row view a sub-task's siblings
   (or, on a root, every root), then — in a backlog — the sprint or segment the cursor
@@ -82,7 +85,7 @@ viewer** — superseding [007](./007-card-detail-view.md)'s `⇧V` binding.
 | Key | Action |
 |-----|--------|
 | `space` | mark / unmark the focused issue (lane header: still folds) |
-| `⇧V` | anchor / drop a visual range (list & backlog, the viewer) |
+| `⇧V` | anchor a visual range, or end it keeping the selection (list & backlog, the viewer) |
 | `^A` | mark the ring around the cursor; again widens: siblings → cell → lane → board (backlog: siblings → sprint → all rows) |
 | `y` `⇧Y` `⇧U` | copy selection: keys / URLs / titles — or the focused issue if none |
 | `esc` | drop range → clear marks → clear filter |

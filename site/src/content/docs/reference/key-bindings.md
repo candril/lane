@@ -19,7 +19,7 @@ Press `?` at any time for this list in the app. `esc`, `?` or `q` closes it.
 | `^D` / `^U` | half a screen of stops down / up |
 | `s` | jump to a card or lane — labels appear, type one; in the viewer: to a link |
 | `⇧H` `⇧L` | move the card to the previous / next column (a status transition) |
-| `⇧J` `⇧K` | reorder (rank) — crosses the backlog divider |
+| `⇧J` `⇧K` | reorder (rank) — the marked block moves as one; crosses the backlog divider |
 | `h` `l` / `↵` | on a lane header or a viewer section: fold / unfold |
 | `z a` / `z o` / `z c` | toggle / open / close the fold under the cursor: sub-tasks, a lane, a row, a viewer list |
 | `z h` | in the viewer: fold / unfold its history |
@@ -76,7 +76,7 @@ Every mutation is optimistic — the board updates at once and reverts if Jira r
 | --- | --- |
 | `space` | mark the issue under the cursor |
 | `^A` | mark its siblings; again: the cell, the lane, the board |
-| `⇧V` | visual range, in the list and the viewer |
+| `⇧V` | visual range, in the list and the viewer — again ends it, keeping the selection |
 | `esc` | clear the selection |
 
 With a selection, `⇧S`, `a`, `#`, `⇧E`, `⇧R` and the copy keys act on every marked issue.
@@ -88,8 +88,7 @@ With a selection, `⇧S`, `a`, `#`, `⇧E`, `⇧R` and the copy keys act on ever
 | `:` | search Jira: words, a key, or JQL |
 | `^A` | …toggle scope: this board ↔ all of Jira |
 | `↑` `↓` `^Y` `tab` | …complete an open field (`epic:`, `#`, `@`) |
-| `↵` | …jump to the result — view it if this board doesn't have it |
-| `^V` | …view the result (description, fields) |
+| `↵` | …open the result (description, fields) |
 | `^T` | …keep the results as a tab |
 | `^O` | …open the result in the browser |
 | `^Y` / `^U` | …copy the result's key / URL |

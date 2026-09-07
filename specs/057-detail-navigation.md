@@ -51,8 +51,18 @@ triaging what hangs off it stop being separate activities.
   path as any off-board link.
 - **The epic is named by key**, `SHOP-1 Cockpit`, as the parent and children already
   were — a name alone can't be acted on or looked up.
+- **Done reads as done**: a finished issue's key is struck through and its summary
+  dimmed, on the header and on every link row, exactly as the card and the list row
+  draw it ([017](./017-list-view.md)) — the viewer spells a card out, it does not
+  invent a second vocabulary for the same state.
+- **The tab's child visibility rules the children section** ([052](./052-child-visibility.md)):
+  `v d` keeps the finished children out of the list, with `✓ N done` under it so
+  nothing vanishes silently, and `v n` starts the section *folded* rather than empty —
+  the viewer is where the children get walked, so a fold that opens beats a list that
+  cannot. Set from the viewer, either takes effect on the issue on screen.
 - **`⇧J`/`⇧K` rank the selected child** against its siblings, mirroring the row views
-  ([006](./006-card-movement.md)); the cursor follows the moved child.
+  ([006](./006-card-movement.md)); the cursor follows the moved child. Marked children move
+  as one block, on the same rule the board and the list views use ([056](./056-bulk-edit.md)).
 - **`/` narrows the children** ([020](./020-filter-and-search.md)) with a filter of
   the viewer's own, in the board's filter language (`front`, `#UX`, `@me`,
   `-type:subtask`…), run over the family alone — children the board never loaded are
@@ -73,9 +83,9 @@ triaging what hangs off it stop being separate activities.
   the rows beneath it at full width, type glyph first and the status right-aligned in a
   column of its own, so ten sub-tasks scan down one edge rather than each status landing
   wherever its summary ended. Epic and parent stay single fields with the same row shape.
-- **Reachable from search** ([046](./046-global-search.md)): `↵` on a `:` result that
-  isn't on this tab shows it in the viewer instead of the browser, and `^V` shows any
-  result in it — the same fetch-first path a link off the board takes.
+- **Reachable from search** ([046](./046-global-search.md)): `↵` on a `:` result shows it
+  in the viewer, whether or not this tab holds the issue — the same fetch-first path a link
+  off the board takes.
 
 ### P2 — Should Have
 
@@ -91,8 +101,16 @@ triaging what hangs off it stop being separate activities.
   `loadIssue` returns the full task, so `↵` fetches an off-board issue *before* the
   viewer switches to it (no blink out to the board mid-fetch) and the viewer renders
   from that copy where the board has none. Its stories still list, since those are on
-  the board. Known limit: the field actions act through board state, so on an
-  off-board issue `⇧S`/`e`/`⇧U` find nothing and do nothing.
+  the board.
+- **The field edits work on an off-board issue too**: the pickers read its fetched copy
+  where the board has none, so they open on its current value, and the write settles by
+  re-reading the issue rather than by an optimistic update — board state has nothing to
+  update for it, and the re-read brings the changelog with it. `⇧S` transitions it *by
+  name* ([047](./047-query-backed-tabs.md)), since it has no card to move and this
+  board's column ids mean nothing outside its query. Known limit: `⇧H`/`⇧L` and the bulk
+  writes still act on board state alone, so they pass an off-board issue over — and the
+  epic and status candidates are this board's, so a result from another project is
+  offered links its workflow may refuse. The toast reports what the write returned.
 - **`⇧H`/`⇧L` on a selected child** to step its status without opening the picker.
 
 ## Out of Scope

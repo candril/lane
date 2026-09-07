@@ -135,39 +135,74 @@ export function useBoardMutations(args: {
   }
 
   /**
-   * Re-rank `key` to sit immediately before/after `neighborKey` (specs/006). The
-   * optimistic reorder mirrors the server op exactly: pull the card out of the
-   * global rank list and reinsert it against the anchor, so a failed write reverts
-   * to precisely the prior order.
+   * Re-rank `keys` to sit immediately before/after `neighborKey` (specs/006), keeping
+   * their order among themselves — one issue for a plain ⇧J, the marked block for a
+   * selection (specs/056). The optimistic reorder mirrors the server op exactly: pull
+   * them out of the global rank list and reinsert them against the anchor, so a failed
+   * write reverts to precisely the prior order.
+   *
+   * Unlike the other bulk writes this is a single request and reverts wholesale: the
+   * issues are ranked *relative to each other*, so a half-applied order is not a
+   * partial success, it is a different order than the one asked for.
    */
   async function applyRank(
-    key: string,
+    keys: string[],
     neighborKey: string,
     direction: -1 | 1,
     onApplied?: (next: BoardModel) => void,
   ) {
-    if (!provider.rankTask) {
+    if (!provider.rankTask || keys.length === 0) {
       return
     }
-    const from = board.tasks.findIndex((t) => t.key === key)
-    if (from < 0 || !board.tasks.some((t) => t.key === neighborKey)) {
+    const moving = new Set(keys)
+    if (moving.has(neighborKey) || !board.tasks.some((t) => t.key === neighborKey)) {
+      return
+    }
+    const ordered = keys.filter((key) => board.tasks.some((t) => t.key === key))
+    if (ordered.length === 0) {
       return
     }
     const previous = board
-    const tasks = [...board.tasks]
-    const [moved] = tasks.splice(from, 1)
+    const tasks = board.tasks.filter((t) => !moving.has(t.key))
     const at = tasks.findIndex((t) => t.key === neighborKey)
-    tasks.splice(direction < 0 ? at : at + 1, 0, moved!)
+    tasks.splice(
+      direction < 0 ? at : at + 1,
+      0,
+      ...ordered.map((key) => board.tasks.find((t) => t.key === key)!),
+    )
     const next: BoardModel = { ...board, tasks }
     setBoard(next)
     onApplied?.(next)
     const anchor = direction < 0 ? { before: neighborKey } : { after: neighborKey }
     pendingMutations.current++
     try {
-      await provider.rankTask(key, anchor)
+      await provider.rankTask(ordered, anchor)
     } catch (err) {
       setBoard(previous)
       showToast(`rank failed: ${err instanceof Error ? err.message : String(err)}`)
+    } finally {
+      settleMutation()
+    }
+  }
+
+  /**
+   * Set the status of an issue this board does not hold (specs/057) — one opened from
+   * search, or a child outside the board's query. It has no card to move and the
+   * board's column ids mean nothing for it, so it transitions *by name*, the way a
+   * query tab does (specs/047). Nothing to apply optimistically either: the viewer
+   * re-reads the issue once the write settles.
+   */
+  async function setStatusByName(key: string, status: string) {
+    if (!provider.transitionTo) {
+      showToast(`${key} is not on this board, and this source can't set its status`)
+      return
+    }
+    pendingMutations.current++
+    try {
+      await provider.transitionTo(key, status)
+      showToast(`${key} → ${status}`)
+    } catch (err) {
+      showToast(`${key} not moved: ${err instanceof Error ? err.message : String(err)}`)
     } finally {
       settleMutation()
     }
@@ -623,6 +658,7 @@ export function useBoardMutations(args: {
 
   return {
     moveTo,
+    setStatusByName,
     submitResolution,
     transition,
     applyRank,

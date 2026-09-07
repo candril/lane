@@ -71,6 +71,42 @@ export function useIssueDetail(provider: BoardProvider) {
     [provider],
   )
 
+  /**
+   * Re-read the open issue from the source, in place. What a field write against an
+   * issue the board doesn't hold needs (specs/057): the optimistic update lands on
+   * board state, which has no copy of it, so the viewer would otherwise keep showing
+   * the values it was fetched with. Refetching rather than patching also brings the
+   * changelog up to date, which is where the edit shows anyway. Silent on purpose —
+   * no loading state, since the issue is on screen and only some fields move.
+   */
+  const refresh = useCallback(
+    (key: string) => {
+      if (!provider.loadIssue) {
+        return
+      }
+      cache.current.delete(key)
+      const ticket = ++run.current
+      void (async () => {
+        const loaded = await load(key).catch(() => null)
+        if (!loaded || ticket !== run.current) {
+          return
+        }
+        setDetail((d) =>
+          d?.key === key
+            ? {
+                ...d,
+                description: loaded.description,
+                unsupported: loaded.unsupported,
+                task: loaded.task,
+                history: loaded.history,
+              }
+            : d,
+        )
+      })()
+    },
+    [provider, load],
+  )
+
   /** Record a description written elsewhere, so reopening shows the new text. */
   const patch = useCallback((key: string, description: string) => {
     const hit = cache.current.get(key)
@@ -222,5 +258,6 @@ export function useIssueDetail(provider: BoardProvider) {
     toggle,
     load,
     patch,
+    refresh,
   }
 }
