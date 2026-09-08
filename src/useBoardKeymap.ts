@@ -909,7 +909,13 @@ export function useBoardKeymap(ctx: BoardKeymapContext) {
             return
           }
         }
-        if (focused && plan && neighbor && neighbor.segment === focused.segment && ctx.provider.rankTask) {
+        if (
+          focused &&
+          plan &&
+          neighbor &&
+          neighbor.segment === focused.segment &&
+          ctx.provider.rankTask
+        ) {
           // Ride along with the issue: rebuilding the rows here would have to know how
           // this view builds them (the backlog's are segmented, specs/044), and getting
           // that wrong strands the cursor rows away — so name the issue and let App put
