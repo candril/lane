@@ -6,6 +6,24 @@ All notable changes to lane are recorded here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- **OpenTUI 0.1.87 to 0.5.11**, the terminal renderer everything is drawn with, together with
+  `@opentui/react` and React 19.3. The one API break was the renderer's console option; screenshots
+  taken before and after are pixel-identical, so nothing about the rendering changed.
+- Docs site to Astro 7 and Starlight 0.42, two majors.
+- `marked` 17 to 18, oxlint 1.82, oxfmt 0.67 and `undici-types` 8.10.2.
+- GitHub Actions moved to the Node 24 majors ahead of Node 20 being removed from hosted runners on
+  23 September 2026.
+- Blockquotes in an issue description now render as an indented quote bar rather than lines prefixed
+  with a literal `>`. This comes from OpenTUI's Markdown renderable, not from lane.
+
+### Known issues
+
+- Three oxlint rules promoted to `correctness` in 1.82 (`react/refs`, `react/immutability`,
+  `react/set-state-in-effect`) are configured as warnings rather than fixed. They flag real call
+  sites and are worth working through.
+
 ## [0.1.1] — 2026-09-06
 
 ### Added
