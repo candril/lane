@@ -6,6 +6,21 @@ All notable changes to lane are recorded here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- `n` in the detail view now files the new issue under the item the viewer's cursor is on, rather
+  than under whatever card was left behind the overlay. Opening an epic and pressing `n` gave a
+  sub-task under the story you had come from; it now opens a story under the epic.
+- Keys in the detail view no longer reach the board behind it. Collapsing a column (`c` / `⇧C`),
+  toggling card tags (`t e/l/a`), changing the sub-task layout (`v o/u/c/g`), folding everything
+  (`z ⇧R` / `z ⇧M`) and the tab chord (`⇧T c/r/x`) all used to act unseen; they are now ignored
+  while the viewer is up, and the command palette stops offering them there. Switching view
+  (`v b/l/k`) closes the viewer first, as switching tab already did.
+- The palette's filter commands act on the viewer's child filter while it is open, rather than on
+  the board's.
+
+## [0.2.0] — 2026-09-12
+
 ### Changed
 
 - **OpenTUI 0.1.87 to 0.5.11**, the terminal renderer everything is drawn with, together with
@@ -17,6 +32,8 @@ All notable changes to lane are recorded here. The format follows
   23 September 2026.
 - Blockquotes in an issue description now render as an indented quote bar rather than lines prefixed
   with a literal `>`. This comes from OpenTUI's Markdown renderable, not from lane.
+- The build now declares the minimum Bun it needs and refuses to run below it, so an incompatible
+  runtime says so instead of failing later with an unexplained internal error.
 
 ### Known issues
 
@@ -86,6 +103,7 @@ First public release.
 - Command palette (`^P`) with every action, and a shortcut dialog (`?`).
 - `lane --mock` opens an offline demo board.
 
-[Unreleased]: https://github.com/candril/lane/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/candril/lane/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/candril/lane/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/candril/lane/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/candril/lane/releases/tag/v0.1.0
