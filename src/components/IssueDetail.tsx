@@ -308,17 +308,18 @@ export const IssueDetail = forwardRef<ScrollBoxRenderable, IssueDetailProps>(fun
                 {linkRow(child)}
               </box>
             ))}
-            {!!hiddenChildren && !childrenFolded && (
-              // The card's marker, as a note under the list: children kept out by the
-              // visibility setting read as hidden, never as absent (specs/052).
-              <box paddingLeft={2}>
-                <text fg={theme.textMuted}>
-                  {hiddenChildren.done
-                    ? `✓ ${hiddenChildren.count} done`
-                    : `▸ ${hiddenChildren.count} hidden`}
-                </text>
-              </box>
-            )}
+            {!!hiddenChildren &&
+              !childrenFolded && (
+                // The card's marker, as a note under the list: children kept out by the
+                // visibility setting read as hidden, never as absent (specs/052).
+                <box paddingLeft={2}>
+                  <text fg={theme.textMuted}>
+                    {hiddenChildren.done
+                      ? `✓ ${hiddenChildren.count} done`
+                      : `▸ ${hiddenChildren.count} hidden`}
+                  </text>
+                </box>
+              )}
           </box>
         )}
         {sections.history !== undefined && (
