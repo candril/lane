@@ -43,7 +43,7 @@
   "dependencies": {
     "@opentui/core": "0.5.11",
     "@opentui/react": "0.5.11",
-    "marked": "17.0.1",
+    "marked": "18.0.12",
     "react": "19.3.0"
   }
 }
