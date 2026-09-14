@@ -63,7 +63,7 @@ import { useScrollIntoView } from "./useScrollIntoView"
 import { useDerivedBoard } from "./useDerivedBoard"
 import { useBoardCursor } from "./useBoardCursor"
 import { useBoardData } from "./useBoardData"
-import { useCreateDraft } from "./useCreateDraft"
+import { useCreateDraft, type CreateAnchor } from "./useCreateDraft"
 import { useJump } from "./useJump"
 import { useDialogs } from "./useDialogs"
 import { usePalette } from "./usePalette"
@@ -1237,6 +1237,21 @@ export function App({
     })
   }
 
+  /**
+   * The issue a quick-add files under while the viewer is up (specs/057): the item
+   * its cursor is on — the issue on screen, or the link picked out below it — in the
+   * board's copy wherever there is one. A link to an issue the board never loaded is
+   * only ever the link, and the epic above a board's stories usually is one.
+   */
+  const detailAnchor: CreateAnchor | undefined = !detail
+    ? undefined
+    : detailSelected
+      ? (taskFor(detailSelected.key) ?? {
+          key: detailSelected.key,
+          type: detailSelected.type ?? (detailSelected.kind === "epic" ? "epic" : "task"),
+        })
+      : detailTask
+
   const {
     creating,
     setCreating,
@@ -1250,6 +1265,7 @@ export function App({
     laneHeader,
     rows,
     listFocus,
+    detailAnchor,
     provider,
     setBoard,
     pendingMutations,

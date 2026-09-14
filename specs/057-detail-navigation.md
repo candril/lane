@@ -29,6 +29,12 @@ triaging what hangs off it stop being separate activities.
   `y`/`⇧Y`/`⇧U`/`⇧D`, `o`/`⇧O` act on the selected link rather than the issue on
   screen. App resolves `currentKey` to it, so no action needed changing
   ([013](./013-quick-field-edit.md), [014](./014-issue-actions.md)).
+- **`n` files under the cursor's item**: the quick-add takes its context from the
+  viewer, not the card left behind the overlay, on the rule the board already uses
+  ([019](./019-quick-create.md)) — an epic gets a story, a story a sub-task, a sub-task
+  a sibling. Where the board holds no copy of the issue the link itself is the context,
+  which is the usual case for the epic above a board's stories. `⇧N` still starts a
+  top-level issue.
 - **`↵` follows the selected link**, replacing the issue on screen. On the issue itself
   there is nothing to follow, so it closes — the same key that opened it
   ([055](./055-multi-select-copy.md)).

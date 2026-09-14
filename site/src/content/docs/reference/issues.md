@@ -22,7 +22,8 @@ section follows the tab's child visibility: `v d` leaves the done ones out (with
 under the list), `v n` starts the section folded.
 
 Every issue action works inside the viewer and targets whatever is selected there: `⇧S` on a
-child sets the child's status, `a` assigns it, `y` copies its key.
+child sets the child's status, `a` assigns it, `y` copies its key, `n` files a new issue under
+it — a story under an epic, a sub-task under a story.
 
 ### History
 

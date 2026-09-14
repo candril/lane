@@ -18,7 +18,9 @@
   nested sub-task. A sub-task carries `parentKey` (the lane link). Both go through
   `-P` at the CLI ([012](./012-create-and-edit-items.md)).
 - **Parent in context**: on the board, the focused card (or lane header); in the
-  backlog list, the focused row's parent (a sub-task's own parent, or the root itself).
+  backlog list, the focused row's parent (a sub-task's own parent, or the root itself);
+  under the detail viewer, the item *its* cursor is on ([057](./057-detail-navigation.md)),
+  since that is the selection while it is up — the card behind the overlay is not.
 - New issues land in the **first column** (no create-then-move); optimistic was
   dropped for a simpler **pending insert** (card appears once the provider
   returns the real key). Defaults (team/component) come from board config.
