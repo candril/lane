@@ -1126,11 +1126,17 @@ export function App({
    * and grouping) and reset the cursor, since lane/column layout differs per tab.
    * Tabs sharing a source keep the loaded board — only a different source refetches.
    */
+  /**
+   * Another tab is another board, and asking for one is asking to leave this issue
+   * (specs/057): the viewer closes rather than being left on an issue the new tab may
+   * not even hold. Here rather than in the keymap so the palette leaves it too.
+   */
   function switchTab(index: number) {
     const tab = tabs[index]
     if (!tab || tab.id === activeTabId) {
       return
     }
+    closeDetail()
     setActiveTabId(tab.id)
     setCursor({ lane: 0, column: 0, row: 0, onHeader: true })
     setListIndex(0)
@@ -1251,6 +1257,12 @@ export function App({
           type: detailSelected.type ?? (detailSelected.kind === "epic" ? "epic" : "task"),
         })
       : detailTask
+
+  /** A view mode is somewhere else too, so it leaves the issue the same way. */
+  function switchView(mode: TabMode) {
+    closeDetail()
+    setView(mode)
+  }
 
   const {
     creating,
@@ -1487,11 +1499,12 @@ export function App({
         showLabels,
         subtasks,
         children,
-        filtered: query !== "",
+        filtered: detail ? detailQuery !== "" : query !== "",
         subtaskScope,
         canCreate: !source.query,
         canResolve: !!provider.listResolutions,
         issueDone: board.tasks.find((t) => t.key === currentKey)?.columnId === doneColumnId,
+        detailOpen: !!detail,
         tabCount: tabs.length,
         ownTab: !!activeTab.adHoc,
         selectionCount: selection.size,
@@ -1507,6 +1520,8 @@ export function App({
       subtasks,
       children,
       query,
+      detail,
+      detailQuery,
       subtaskScope,
       source.query,
       provider,
@@ -1562,7 +1577,7 @@ export function App({
     copyTitle: () => (selection.size > 0 ? copySelection("title") : copyTitle()),
     copyDescription,
     startCreate,
-    setView,
+    setView: switchView,
     setGrouping: (next) => {
       setGrouping(next)
       setCursor({ lane: 0, column: 0, row: 0, onHeader: false })
@@ -1572,7 +1587,7 @@ export function App({
     setSubtaskLayout,
     setChildVisibility,
     startFilter: () => setFiltering(true),
-    clearFilter: () => setQuery(""),
+    clearFilter: () => (detail ? setDetailQuery("") : setQuery("")),
     toggleSubtaskScope,
     foldAll,
     doRefresh,
@@ -2207,7 +2222,7 @@ export function App({
     expandAllColumns,
     toggleSubtaskScope,
     setQuery: detail ? setDetailQuery : setQuery,
-    setView,
+    setView: switchView,
     setShowEpics,
     setShowLabels,
     setSubtaskLayout,

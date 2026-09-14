@@ -29,6 +29,17 @@ triaging what hangs off it stop being separate activities.
   `y`/`⇧Y`/`⇧U`/`⇧D`, `o`/`⇧O` act on the selected link rather than the issue on
   screen. App resolves `currentKey` to it, so no action needed changing
   ([013](./013-quick-field-edit.md), [014](./014-issue-actions.md)).
+- **The viewer is the screen while it is up.** A key acts on the item its cursor is on,
+  or it does nothing — nothing reaches the board behind the overlay. The board's own
+  keys go quiet there: `c`/`⇧C` (columns), `t e/l/a` (card tags), the sub-task layouts
+  (`v o/u/c/g`), `z ⇧R`/`z ⇧M` (fold everything) and the `⇧T` tab chord; the palette
+  stops offering them for the reason it drops any command that cannot act
+  ([010](./010-command-palette.md)). The two gestures that mean *take me elsewhere* —
+  another tab (`1`–`9`, `[`, `]`) and another view (`v b/l/k`) — close the viewer on
+  the way out, so the move lands where it can be seen rather than under an overlay.
+  `v a/d/n` stays, since it rules the children section on screen
+  ([052](./052-child-visibility.md)), as do `/`, `f…` and `⇧F`, which are the viewer's
+  own filter, and `r`, which is the whole board's data either way.
 - **`n` files under the cursor's item**: the quick-add takes its context from the
   viewer, not the card left behind the overlay, on the rule the board already uses
   ([019](./019-quick-create.md)) — an epic gets a story, a story a sub-task, a sub-task

@@ -62,4 +62,10 @@ export interface CommandContext {
   tabCount: number
   /** The active tab is an ad-hoc one, so it can be renamed or closed (specs/045). */
   ownTab: boolean
+  /**
+   * The detail viewer is up (specs/057), so it — not the board — is the screen. The
+   * commands that would reshape what sits behind it are left out on the same rule
+   * everything else here follows: what cannot act now is not offered.
+   */
+  detailOpen: boolean
 }

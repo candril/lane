@@ -12,6 +12,9 @@ import type { Command, CommandContext } from "./types"
 export function buildCommands(ctx: CommandContext): Command[] {
   const commands: Command[] = []
   const issue = ctx.issueKey
+  // What the board draws — its grouping, its layouts, its tags, its folds, its tabs —
+  // only exists to be changed while you are looking at it (specs/057).
+  const onBoard = !ctx.detailOpen
   // The field editors and copies act on the multi-select when one exists (specs/055,
   // specs/056), so those commands name the selection and survive a cursor on nothing.
   const selected = ctx.selectionCount
@@ -146,7 +149,7 @@ export function buildCommands(ctx: CommandContext): Command[] {
     sprint: !ctx.hasSprints,
   }
   for (const g of groupings) {
-    if (ctx.grouping === g.key || unavailable[g.key]) {
+    if (!onBoard || ctx.grouping === g.key || unavailable[g.key]) {
       continue
     }
     commands.push({ id: `group:${g.key}`, label: g.label, category: "view", shortcut: g.shortcut })
@@ -159,7 +162,7 @@ export function buildCommands(ctx: CommandContext): Command[] {
     { layout: "basket", label: "Sub-tasks: parent baskets", shortcut: "v g" },
   ] as const
   for (const l of layouts) {
-    if (ctx.subtasks !== l.layout) {
+    if (onBoard && ctx.subtasks !== l.layout) {
       commands.push({
         id: `subtasks:${l.layout}`,
         label: l.label,
@@ -184,21 +187,30 @@ export function buildCommands(ctx: CommandContext): Command[] {
       })
     }
   }
-  commands.push(
-    {
-      id: "view:epic-tags",
-      label: ctx.showEpics ? "Hide epic tags" : "Show epic tags",
-      category: "view",
-      shortcut: "t e",
-    },
-    {
-      id: "view:label-tags",
-      label: ctx.showLabels ? "Hide label tags" : "Show label tags",
-      category: "view",
-      shortcut: "t l",
-    },
-    { id: "view:filter", label: "Filter this board…", category: "view", shortcut: "/" },
-  )
+  if (onBoard) {
+    commands.push(
+      {
+        id: "view:epic-tags",
+        label: ctx.showEpics ? "Hide epic tags" : "Show epic tags",
+        category: "view",
+        shortcut: "t e",
+      },
+      {
+        id: "view:label-tags",
+        label: ctx.showLabels ? "Hide label tags" : "Show label tags",
+        category: "view",
+        shortcut: "t l",
+      },
+    )
+  }
+  // `/` narrows the viewer's children while it is up, so the command says which
+  // list it is about to filter (specs/057).
+  commands.push({
+    id: "view:filter",
+    label: onBoard ? "Filter this board…" : "Filter the children…",
+    category: "view",
+    shortcut: "/",
+  })
   if (ctx.filtered) {
     commands.push({
       id: "view:clear-filter",
@@ -216,22 +228,26 @@ export function buildCommands(ctx: CommandContext): Command[] {
       shortcut: "⇧F",
     })
   }
-  commands.push(
-    { id: "fold:open-all", label: "Unfold everything", category: "view", shortcut: "z ⇧R" },
-    { id: "fold:close-all", label: "Fold everything", category: "view", shortcut: "z ⇧M" },
-  )
+  if (onBoard) {
+    commands.push(
+      { id: "fold:open-all", label: "Unfold everything", category: "view", shortcut: "z ⇧R" },
+      { id: "fold:close-all", label: "Fold everything", category: "view", shortcut: "z ⇧M" },
+    )
+  }
 
   commands.push(
     { id: "board:refresh", label: "Refresh the board", category: "board", shortcut: "r" },
     { id: "board:search", label: "Search Jira…", category: "board", shortcut: ":" },
   )
 
-  commands.push({ id: "tab:clone", label: "Clone this tab", category: "tabs", shortcut: "⇧T c" })
-  if (ctx.ownTab) {
-    commands.push(
-      { id: "tab:rename", label: "Rename this tab", category: "tabs", shortcut: "⇧T r" },
-      { id: "tab:close", label: "Close this tab", category: "tabs", shortcut: "⇧T x" },
-    )
+  if (onBoard) {
+    commands.push({ id: "tab:clone", label: "Clone this tab", category: "tabs", shortcut: "⇧T c" })
+    if (ctx.ownTab) {
+      commands.push(
+        { id: "tab:rename", label: "Rename this tab", category: "tabs", shortcut: "⇧T r" },
+        { id: "tab:close", label: "Close this tab", category: "tabs", shortcut: "⇧T x" },
+      )
+    }
   }
   if (ctx.tabCount > 1) {
     commands.push(

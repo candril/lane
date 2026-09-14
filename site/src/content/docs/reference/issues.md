@@ -25,6 +25,11 @@ Every issue action works inside the viewer and targets whatever is selected ther
 child sets the child's status, `a` assigns it, `y` copies its key, `n` files a new issue under
 it — a story under an epic, a sub-task under a story.
 
+Nothing else reaches the board behind it. The keys that reshape the board — `c`, `t e/l/a`,
+`v o/u/c/g`, `z ⇧R` / `z ⇧M`, `⇧T` — do nothing while the viewer is up, and the palette leaves
+them out. Asking for another view (`v b/l/k`) or another tab (`[`, `]`, `1`–`9`) closes the
+viewer on the way, so you always see the move you asked for.
+
 ### History
 
 `z h` unfolds the history: who changed what, when, newest first, with the churn (ranks, worklogs)

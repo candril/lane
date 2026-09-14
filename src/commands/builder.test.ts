@@ -20,6 +20,7 @@ const BASE: CommandContext = {
   selectionCount: 0,
   tabCount: 2,
   ownTab: false,
+  detailOpen: false,
 }
 
 const ids = (ctx: Partial<CommandContext> = {}) =>
@@ -137,4 +138,28 @@ test("the child visibilities you are not in are offered", () => {
     "children:all",
     "children:none",
   ])
+})
+
+test("the viewer leaves the board's own commands out of the palette", () => {
+  const under = ids({ detailOpen: true })
+  // Nothing that reshapes what sits behind the overlay.
+  expect(under.filter((id) => id.startsWith("group:"))).toEqual([])
+  expect(under.filter((id) => id.startsWith("subtasks:"))).toEqual([])
+  expect(under).not.toContain("view:epic-tags")
+  expect(under).not.toContain("view:label-tags")
+  expect(under).not.toContain("fold:open-all")
+  expect(under).not.toContain("fold:close-all")
+  expect(under).not.toContain("tab:clone")
+  // What the viewer can act on, or what leaves it, stays.
+  expect(under).toContain("issue:new")
+  expect(under).toContain("children:hide-done")
+  expect(under).toContain("view:list")
+  expect(under).toContain("tab:next")
+})
+
+test("the filter command names the list it would narrow", () => {
+  const label = (ctx: Partial<CommandContext>) =>
+    buildCommands({ ...BASE, ...ctx }).find((c) => c.id === "view:filter")?.label
+  expect(label({})).toBe("Filter this board…")
+  expect(label({ detailOpen: true })).toBe("Filter the children…")
 })

@@ -88,7 +88,8 @@ export interface BoardKeymapContext {
   expandAllColumns: () => void
   toggleSubtaskScope: () => void
   setQuery: Dispatch<SetStateAction<string>>
-  setView: Dispatch<SetStateAction<TabMode>>
+  /** `v b`/`v l`/`v k`: switch view — and leave the viewer, if it is up (specs/057). */
+  setView: (mode: TabMode) => void
   setShowEpics: Dispatch<SetStateAction<boolean>>
   setShowLabels: Dispatch<SetStateAction<boolean>>
   setSubtaskLayout: (layout: SubtaskLayout) => void
@@ -192,6 +193,13 @@ const CHILD_VISIBILITY_KEYS: Record<string, ChildVisibility | undefined> = {
   a: "all",
   d: "hide-done",
   n: "none",
+}
+
+/** The view chord's modes (specs/017): `v b` board, `v l` list, `v k` backlog. */
+const VIEW_KEYS: Record<string, TabMode | undefined> = {
+  b: "board",
+  l: "list",
+  k: "backlog",
 }
 
 /**
@@ -452,26 +460,31 @@ export function useBoardKeymap(ctx: BoardKeymapContext) {
 
     // Resolve a pending `v…` view chord (specs/017): `b` board, `l` list, `k` backlog
     // (specs/044). Any other key cancels — bare `v` no longer toggles, so switching
-    // view is always explicit.
+    // view is always explicit. Under the viewer the modes still apply — asking for one
+    // is asking to leave the issue, so `setView` closes the viewer on the way — and so
+    // does the child visibility, which rules the section on screen (specs/052). The
+    // sub-task layouts are the board's alone, and the board is not what you are
+    // looking at, so they are dropped rather than applied unseen (specs/057).
     if (vPendingRef.current) {
       vPendingRef.current = false
-      if (name === "b") {
-        ctx.setView("board")
-      } else if (name === "l") {
-        ctx.setView("list")
-      } else if (name === "k") {
-        ctx.setView("backlog")
-      } else if (SUBTASK_LAYOUT_KEYS[name]) {
-        ctx.setSubtaskLayout(SUBTASK_LAYOUT_KEYS[name]!)
+      const mode = VIEW_KEYS[name]
+      if (mode) {
+        ctx.setView(mode)
       } else if (CHILD_VISIBILITY_KEYS[name]) {
         ctx.setChildVisibility(CHILD_VISIBILITY_KEYS[name]!)
+      } else if (SUBTASK_LAYOUT_KEYS[name] && !ctx.detailOpen) {
+        ctx.setSubtaskLayout(SUBTASK_LAYOUT_KEYS[name]!)
       }
       return
     }
 
     // Resolve a pending `⇧T…` tab chord (specs/045): `c` clone, `r` rename, `x` close.
+    // All three rearrange the tabs behind the viewer, so it swallows them (specs/057).
     if (tabPendingRef.current) {
       tabPendingRef.current = false
+      if (ctx.detailOpen) {
+        return
+      }
       if (name === "c") {
         ctx.cloneTab()
       } else if (name === "r") {
@@ -483,9 +496,13 @@ export function useBoardKeymap(ctx: BoardKeymapContext) {
     }
 
     // Resolve a pending `t…` tag-visibility chord (specs/039): `e` epic tags, `l`
-    // labels, `a` both (off if either is on, else on). Any other key cancels.
+    // labels, `a` both (off if either is on, else on). Any other key cancels. The tags
+    // are drawn on cards, so under the viewer there is nothing to toggle (specs/057).
     if (tPendingRef.current) {
       tPendingRef.current = false
+      if (ctx.detailOpen) {
+        return
+      }
       if (name === "e") {
         ctx.setShowEpics((s) => !s)
       } else if (name === "l") {
@@ -621,12 +638,9 @@ export function useBoardKeymap(ctx: BoardKeymapContext) {
         gPendingRef.current = true
         return
       }
-      // Switching tabs closes the viewer rather than leaving it on an issue the new
-      // tab may not even hold — asking for another board is asking to leave this
-      // issue. Deliberately falls through, so the tab switch itself still happens.
-      if (name === "[" || name === "]" || (/^[1-9]$/.test(name) && !shift)) {
-        ctx.closeDetail()
-      }
+      // `[`, `]` and the tab digits deliberately fall through: asking for another
+      // board is asking to leave this issue, and `switchTab` closes the viewer on the
+      // way, so the switch lands where it can be seen (specs/057).
     }
 
     // ^P opens the command palette (specs/010) — every action, and the field editors
@@ -755,7 +769,8 @@ export function useBoardKeymap(ctx: BoardKeymapContext) {
       return
     }
     // `c` folds the column under the cursor to a strip; `⇧C` expands all (specs/040).
-    if (name === "c" && ctx.view === "board") {
+    // Both reshape the board behind the viewer, which swallows them (specs/057).
+    if (name === "c" && ctx.view === "board" && !ctx.detailOpen) {
       if (shift) {
         ctx.expandAllColumns()
       } else {
