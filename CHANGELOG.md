@@ -19,7 +19,7 @@ All notable changes to lane are recorded here. The format follows
 - The palette's filter commands act on the viewer's child filter while it is open, rather than on
   the board's.
 
-## [0.2.0] — 2026-09-12
+## [0.2.0] — 2026-09-14
 
 ### Changed
 
