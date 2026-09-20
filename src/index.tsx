@@ -176,11 +176,13 @@ function demoSources(): BoardSource[] {
 /**
  * Pick the data source and load the first board — all on the normal screen, before
  * the TUI takes over, so any startup diagnostics render cleanly. Jira is the
- * default; the mock is used only with `--mock`, when Jira is unreachable, or when
+ * default; the mock is used only with `--mock`/`--demo`, when Jira is unreachable, or when
  * the initial load fails — so the app always starts.
  */
 async function startup(): Promise<Startup> {
-  const wantMock = args.includes("--mock")
+  // `--demo` is what the other four tools call this, and what the fleet's smoke
+  // harness launches; `--mock` is lane's own older name for it and stays.
+  const wantMock = args.includes("--mock") || args.includes("--demo")
 
   // config.toml is optional and provider-independent for display prefs, so load it
   // once up front: `[display]` then applies to the mock board too, and the Jira
