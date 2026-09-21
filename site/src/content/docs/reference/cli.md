@@ -18,7 +18,7 @@ If Jira can't be reached, or no board is configured, lane says so on the normal 
 the TUI takes over, so the diagnostic renders cleanly — and opens the demo board instead. It
 always starts.
 
-### `--mock`
+### `--mock`, `--demo`
 
 Run against the built-in demo board: a fictional web shop's sprint with sub-tasks, epics,
 sprints, a backlog, descriptions and history, as three tabs. No credentials, no network. Edits

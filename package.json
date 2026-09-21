@@ -1,6 +1,6 @@
 {
   "name": "lane",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Terminal Kanban board for Jira. Keyboard-first, vim-flavoured, config-driven.",
   "license": "MIT",
   "repository": {
