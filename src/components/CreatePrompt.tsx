@@ -1,4 +1,4 @@
-import { useRef } from "react"
+import { useState } from "react"
 import { theme } from "../theme"
 import type { IssueType } from "../types"
 import { typeGlyph } from "../utils/glyphs"
@@ -7,8 +7,8 @@ interface CreatePromptProps {
   type: IssueType
   /** The issue this one files under (a sub-task's parent or an epic); null if top-level. */
   parent: { key: string; color: string } | null
-  submitting: boolean
-  error?: string
+  /** What a retry reopens with (specs/059); empty for a fresh quick-add. */
+  initialSummary?: string
   onSubmit: (summary: string) => void
 }
 
@@ -18,13 +18,11 @@ interface CreatePromptProps {
  * line is dismissed with Esc — both handled by App's keyboard owner, which fires
  * ahead of this focused input (see the InternalKeyHandler priority in OpenTUI).
  */
-export function CreatePrompt({ type, parent, submitting, error, onSubmit }: CreatePromptProps) {
+export function CreatePrompt({ type, parent, initialSummary, onSubmit }: CreatePromptProps) {
   const glyph = typeGlyph(type)
   const nesting = parent
-  const hint = submitting ? "creating…" : "^T type · esc cancel"
-  // Mirror the field's text so Enter can submit it: the underlying SubmitEvent
-  // carries no value, so we read the last onInput instead.
-  const valueRef = useRef("")
+  // Held here because the underlying SubmitEvent carries no value for Enter to submit.
+  const [value, setValue] = useState(initialSummary ?? "")
 
   return (
     <box flexDirection="column" flexShrink={0} backgroundColor={theme.headerBg}>
@@ -43,17 +41,13 @@ export function CreatePrompt({ type, parent, submitting, error, onSubmit }: Crea
             width="100%"
             focused
             placeholder="summary…"
-            onInput={(value) => (valueRef.current = value)}
-            onSubmit={() => onSubmit(valueRef.current)}
+            value={value}
+            onInput={setValue}
+            onSubmit={() => onSubmit(value)}
           />
         </box>
-        <text fg={submitting ? theme.warning : theme.textMuted}> {hint}</text>
+        <text fg={theme.textMuted}> ^T type · esc cancel</text>
       </box>
-      {error && (
-        <box paddingX={1}>
-          <text fg={theme.error}>{error}</text>
-        </box>
-      )}
     </box>
   )
 }

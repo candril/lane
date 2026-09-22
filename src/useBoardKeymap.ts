@@ -36,6 +36,18 @@ export interface BoardKeymapContext {
   /** The command palette (specs/010) — it owns every key while open, submenus included. */
   palette: boolean
   creating: boolean
+  /** The notice under the board offers `u` (specs/059). */
+  canUndoCreate: boolean
+  /** …and `↵`, which the viewer's own links take precedence over. */
+  canOpenCreate: boolean
+  openCreated: () => void
+  undoCreate: () => void
+  /** Undo asked whether to delete, and owns `y`/`n` until answered (specs/059). */
+  createConfirm: boolean
+  cancelUndoCreate: () => void
+  confirmUndoCreate: () => void
+  /** Clears a create failure's notice; false when none was showing. */
+  dismissCreateFailure: () => boolean
   editing: boolean
   assigning: boolean
   labeling: boolean
@@ -643,6 +655,21 @@ export function useBoardKeymap(ctx: BoardKeymapContext) {
       // way, so the switch lands where it can be seen (specs/057).
     }
 
+    // Undo's confirmation owns `y`/`n` while it is up (specs/059) — `y` copies a key
+    // otherwise, which is exactly the kind of near-miss a delete must not ride on. Any
+    // other key answers "no" and then does its own job.
+    if (ctx.createConfirm) {
+      if (name === "y") {
+        ctx.confirmUndoCreate()
+        return
+      }
+      if (name === "n" || name === "escape") {
+        ctx.cancelUndoCreate()
+        return
+      }
+      ctx.cancelUndoCreate()
+    }
+
     // ^P opens the command palette (specs/010) — every action, and the field editors
     // as submenus, without needing to know the direct key. ⇧P is its alias for the
     // one place ^P means something else: the viewer, where it walks the items.
@@ -675,8 +702,12 @@ export function useBoardKeymap(ctx: BoardKeymapContext) {
       ctx.setFiltering(true)
       return
     }
-    // Esc backs out in layers (specs/055): an active visual range first, then the
-    // marks, then the filter. Backspace only ever clears the filter.
+    // Esc backs out in layers (specs/055): a create failure's notice (specs/059), an
+    // active visual range, then the marks, then the filter. Backspace only ever clears
+    // the filter.
+    if (name === "escape" && ctx.dismissCreateFailure()) {
+      return
+    }
     if (name === "escape" && ctx.visualActive) {
       ctx.exitVisual()
       return
@@ -867,9 +898,23 @@ export function useBoardKeymap(ctx: BoardKeymapContext) {
       return
     }
 
+    // Undo works over the viewer too: a quick-add from there lands among its children,
+    // where the undone one visibly goes (specs/059).
+    if (name === "u" && ctx.canUndoCreate) {
+      ctx.undoCreate()
+      return
+    }
+
     // Past here the keys move a cursor or fold a lane, neither of which is visible
     // behind the detail overlay — so it swallows them (specs/007).
     if (ctx.detailOpen) {
+      return
+    }
+
+    // ↵ on the notice opens what was just created (specs/059), where its children and
+    // fields can be set. Checked before ↵ opens whatever the cursor sits on.
+    if ((name === "return" || name === "enter") && ctx.canOpenCreate) {
+      ctx.openCreated()
       return
     }
 

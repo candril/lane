@@ -51,6 +51,8 @@ export interface CommandContext {
   subtaskScope: "strict" | "inherit"
   /** A query tab can't create issues (specs/047). */
   canCreate: boolean
+  /** The latest quick-add can still be taken back (specs/059). */
+  canUndoCreate: boolean
   /** The source can report the workflow's resolutions, so a reason can be set (specs/053). */
   canResolve: boolean
   /** The focused issue sits in the done column — so a reason is amended, not a close made. */

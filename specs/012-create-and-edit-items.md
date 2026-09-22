@@ -9,8 +9,8 @@
   the interactive CLI spawn — the mock provider has no CLI to spawn, and the
   keyboard-first flow is the point. Create runs `jira issue create --no-input`
   with flags for summary/type/parent + board `createDefaults`.
-- Only **create** landed here (summary + type + parent, first column, pending
-  insert). Editing summary/description and setting priority/assignee at create
+- Only **create** landed here (summary + type + parent, first column, optimistic
+  insert — [059](./059-optimistic-create.md)). Editing summary/description and setting priority/assignee at create
   are still open. See [019-quick-create](./019-quick-create.md) for the ergonomics.
 
 ## Description

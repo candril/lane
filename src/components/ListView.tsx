@@ -9,6 +9,7 @@ import { LabelTags } from "./LabelTags"
 import { EpicTag } from "./EpicTag"
 import { JumpGlyph } from "./JumpTag"
 import { useTagVisibility } from "./TagVisibility"
+import { keyLabel } from "../pendingCreate"
 
 interface ListViewProps {
   rows: ListRow[]
@@ -139,11 +140,16 @@ export function ListView({
                   }
                   attributes={done ? TextAttributes.STRIKETHROUGH : undefined}
                 >
-                  {row.task.key}
+                  {keyLabel(row.task.key)}
                 </span>
                 <span fg={dim || done ? theme.textDim : theme.text}>
                   {" "}
-                  {summaryFor(row.task.summary, row.task.key, width - row.depth * 2, tags)}
+                  {summaryFor(
+                    row.task.summary,
+                    keyLabel(row.task.key),
+                    width - row.depth * 2,
+                    tags,
+                  )}
                 </span>
               </text>
               <box flexGrow={1} />

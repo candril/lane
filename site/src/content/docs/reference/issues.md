@@ -44,6 +44,7 @@ as a unified diff.
 | --- | --- |
 | `n` | new issue in context: a sub-task under the card, or a story in its epic; `^T` cycles the type |
 | `⇧N` | new top-level issue |
+| `u` | undo the last create, while the notice under the board offers it |
 | `e` | rename — an inline prompt for the summary |
 | `i` | edit summary and description together in `$EDITOR`, as Markdown |
 | `a` | assign: me, unassigned, anyone on the board, or a typed name |
@@ -55,7 +56,15 @@ as a unified diff.
 | `⇧J` / `⇧K` | re-rank — the whole selection moves as one block |
 
 Every one of these is optimistic: the card changes at once, and snaps back with a toast if Jira
-refuses. Moving a card into a column transitions the issue to that column's first status; into
+refuses.
+
+A new issue shows up the moment you press Enter, as `new…`, and takes its key when Jira answers a
+second or two later; until then it can't be edited or moved. The notice under the board then offers
+two things: `↵` opens the issue in the viewer, where you set its children, assignee and epic — press
+it while the create is still in flight and it opens as soon as the key arrives — and `u` undoes the
+create. Undo asks first (`y` deletes, `n` keeps), because it deletes the issue, or, where Jira
+won't let you delete, closes it as Won't Do. A create Jira refuses leaves a notice with the reason,
+and `n` reopens the prompt with what you typed. Moving a card into a column transitions the issue to that column's first status; into
 Done, it also attaches the resolution the workflow asks for, so an ordinary `⇧L` works without a
 dialog.
 

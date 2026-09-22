@@ -70,6 +70,7 @@ const RIGHT: Group[] = [
     title: "Issue",
     items: [
       ["n / N", "new (in context / top-level)"],
+      ["u", "undo the last create (asks first)"],
       ["^T", "cycle type (while creating)"],
       ["↵", "view · in the viewer: open link / show edit as diff"],
       ["j k ^n ^p", "…walk its links, sections and history"],

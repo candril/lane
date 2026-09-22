@@ -22,6 +22,7 @@ import { Shell } from "./components/Shell"
 import { Header } from "./components/Header"
 import { Board } from "./components/Board"
 import { ListView } from "./components/ListView"
+import { CreateNotice } from "./components/CreateNotice"
 import { CreatePrompt } from "./components/CreatePrompt"
 import { EditPrompt } from "./components/EditPrompt"
 import { Picker } from "./components/Picker"
@@ -64,6 +65,7 @@ import { useDerivedBoard } from "./useDerivedBoard"
 import { useBoardCursor } from "./useBoardCursor"
 import { useBoardData } from "./useBoardData"
 import { useCreateDraft, type CreateAnchor } from "./useCreateDraft"
+import { isPendingKey, withPendingGuard } from "./pendingCreate"
 import { useJump } from "./useJump"
 import { useDialogs } from "./useDialogs"
 import { usePalette } from "./usePalette"
@@ -227,7 +229,7 @@ export function App({
     dropSource,
     activeSourceId,
     source,
-    provider,
+    provider: sourceProvider,
     refreshing,
     lastRefresh,
     doRefresh,
@@ -250,6 +252,9 @@ export function App({
       }
     },
   })
+  // Every write the UI makes goes through this, so a card still waiting for its key
+  // can't send `pending-N` to Jira however the key reached the call (specs/059).
+  const provider = useMemo(() => withPendingGuard(sourceProvider), [sourceProvider])
 
   // Tabs and their projections (specs/045): the tab list is App state because tabs
   // outnumber sources — one source can back a board tab, its backlog tab, and any
@@ -778,7 +783,10 @@ export function App({
   // cursor decides which issue that is (specs/057): the one on screen, or a linked
   // one picked out below it. Every action keyed off `currentKey` — the field editors
   // above all — targets that without knowing the viewer exists.
-  const currentKey = detail ? (detailSelected?.key ?? detail.key) : cursorKey
+  const shownKey = detail ? (detailSelected?.key ?? detail.key) : cursorKey
+  // A card still being created — on the board or among the viewer's children — has
+  // no key to act on yet (specs/059).
+  const currentKey = isPendingKey(shownKey) ? null : shownKey
   useEffect(() => {
     cursorKeyRef.current = cursorKey
   })
@@ -1270,6 +1278,12 @@ export function App({
     startCreate: beginCreate,
     cycleCreateType,
     submitCreate,
+    createNotice,
+    openCreated,
+    undoCreate,
+    cancelUndoCreate,
+    confirmUndoCreate,
+    dismissCreateFailure,
   } = useCreateDraft({
     board,
     view,
@@ -1282,7 +1296,11 @@ export function App({
     setBoard,
     pendingMutations,
     settleMutation,
+    showToast,
+    openIssue: (key) => whenLoaded(key, () => openDetail(key)),
   })
+
+  const canUndoCreate = createNotice?.kind === "pending" || createNotice?.kind === "created"
 
   /**
    * Creating in a query tab is refused (specs/047): the issue would be filed into the
@@ -1502,6 +1520,7 @@ export function App({
         filtered: detail ? detailQuery !== "" : query !== "",
         subtaskScope,
         canCreate: !source.query,
+        canUndoCreate,
         canResolve: !!provider.listResolutions,
         issueDone: board.tasks.find((t) => t.key === currentKey)?.columnId === doneColumnId,
         detailOpen: !!detail,
@@ -1524,6 +1543,7 @@ export function App({
       detailQuery,
       subtaskScope,
       source.query,
+      canUndoCreate,
       provider,
       board.tasks,
       doneColumnId,
@@ -1577,6 +1597,7 @@ export function App({
     copyTitle: () => (selection.size > 0 ? copySelection("title") : copyTitle()),
     copyDescription,
     startCreate,
+    undoCreate,
     setView: switchView,
     setGrouping: (next) => {
       setGrouping(next)
@@ -1999,6 +2020,11 @@ export function App({
       return
     }
     const key = detailSelected.key
+    // There is nothing to fetch for it until Jira has answered (specs/059).
+    if (isPendingKey(key)) {
+      showToast("still being created")
+      return
+    }
     whenLoaded(key, () => pushDetail(key))
   }
 
@@ -2197,6 +2223,14 @@ export function App({
     palette: palette.open,
     openPalette: palette.openPalette,
     creating: !!creating,
+    canUndoCreate,
+    canOpenCreate: canUndoCreate && !detail,
+    openCreated,
+    undoCreate,
+    createConfirm: createNotice?.kind === "confirm",
+    cancelUndoCreate,
+    confirmUndoCreate,
+    dismissCreateFailure,
     editing: !!editing,
     assigning: !!assigning,
     labeling: !!labeling,
@@ -2367,6 +2401,9 @@ export function App({
           />
         )}
       </TagVisibilityProvider>
+      {/* ↵ belongs to the viewer's own links while it is up (specs/057), so the notice
+          doesn't offer it there. */}
+      {createNotice && <CreateNotice notice={createNotice} canOpen={!detail} />}
       {creating && (
         <CreatePrompt
           type={creating.type}
@@ -2376,8 +2413,7 @@ export function App({
               ? creating.contextParent
               : null
           }
-          submitting={creating.submitting}
-          error={creating.error}
+          initialSummary={creating.summary}
           onSubmit={submitCreate}
         />
       )}

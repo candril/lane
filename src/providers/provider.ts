@@ -82,9 +82,15 @@ export interface BoardProvider {
   /**
    * Create an issue from {@link CreateInput}, returning it as it should land on
    * the board (real key, first column). Rejects if the backend refuses; the UI
-   * only inserts the card once this resolves.
+   * has inserted the card under a placeholder by then and drops it (specs/059).
    */
   createIssue(input: CreateInput): Promise<Task>
+  /**
+   * Delete an issue outright — the undo of a create (specs/059). Optional, and expected
+   * to reject where the backend's permissions forbid it; the caller falls back to
+   * closing the issue instead.
+   */
+  deleteIssue?(key: string): Promise<void>
   /** Rename an issue — set its summary/title. Rejects if the backend refuses. */
   editSummary(key: string, summary: string): Promise<void>
   /**

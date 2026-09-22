@@ -9,6 +9,7 @@ import { LabelTags } from "./LabelTags"
 import { EpicTag } from "./EpicTag"
 import { JumpGlyph } from "./JumpTag"
 import { useTagVisibility } from "./TagVisibility"
+import { keyLabel } from "../pendingCreate"
 
 interface CardProps {
   task: Task
@@ -95,7 +96,7 @@ export const Card = forwardRef<BoxRenderable, CardProps>(function Card(
         <box flexGrow={1} flexShrink={1} flexDirection="column" marginRight={1}>
           <text>
             <span fg={keyColor} attributes={done ? TextAttributes.STRIKETHROUGH : undefined}>
-              {task.key}
+              {keyLabel(task.key)}
             </span>
             <span fg={summaryColor}> {task.summary}</span>
           </text>

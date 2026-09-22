@@ -15,6 +15,7 @@ const BASE: CommandContext = {
   filtered: false,
   subtaskScope: "strict",
   canCreate: true,
+  canUndoCreate: false,
   canResolve: true,
   issueDone: false,
   selectionCount: 0,

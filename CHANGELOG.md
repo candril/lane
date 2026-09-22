@@ -6,6 +6,21 @@ All notable changes to lane are recorded here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- A new issue appears the moment you press Enter instead of after Jira answers, which took one to
+  three seconds. It shows `new…` in place of its key until the key arrives, and can't be edited or
+  moved until then.
+
+### Added
+
+- The notice under the board after a create offers two keys. `↵` opens the new issue in the
+  viewer, where its children, assignee and epic are set; pressed while the create is still in
+  flight, it opens as soon as the key arrives. `u` undoes the create, asking first (`y` deletes,
+  `n` keeps): the issue is deleted, or, where Jira doesn't allow deleting, closed as Won't Do.
+- A create Jira refuses leaves a notice with the reason until `esc`, and `n` reopens the prompt
+  with what you typed.
+
 ## [0.3.0] — 2026-09-21
 
 ### Added

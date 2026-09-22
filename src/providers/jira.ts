@@ -749,6 +749,12 @@ export function createJiraProvider(config: JiraConfig): BoardProvider {
       }
     },
 
+    async deleteIssue(key: string): Promise<void> {
+      await logRequest(`delete ${key}`, () =>
+        client.request("DELETE", `/rest/api/3/issue/${encodeURIComponent(key)}`),
+      )
+    },
+
     issueUrl(key) {
       return `${client.baseUrl}/browse/${key}`
     },

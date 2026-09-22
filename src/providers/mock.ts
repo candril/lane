@@ -535,6 +535,9 @@ export function createMockProvider(data: MockData = sampleData()): BoardProvider
       board.tasks.push(task)
       return structuredClone(task)
     },
+    async deleteIssue(key) {
+      board.tasks = board.tasks.filter((t) => t.key !== key)
+    },
     issueUrl(key) {
       // Placeholder so the open/copy-URL actions are exercisable offline.
       return `https://jira.example.com/browse/${key}`

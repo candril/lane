@@ -10,6 +10,7 @@ import type { IssueType, Task } from "../types"
 import { Avatar } from "./Avatar"
 import { JumpGlyph } from "./JumpTag"
 import { LabelTags } from "./LabelTags"
+import { keyLabel } from "../pendingCreate"
 
 /**
  * An issue this one links to, drawn as a selectable row (specs/057): its epic, its
@@ -136,7 +137,7 @@ function LinkRow({
             fg={emphasis ? theme.warning : theme.textDim}
             attributes={link.done ? TextAttributes.STRIKETHROUGH : undefined}
           >
-            {link.key}
+            {keyLabel(link.key)}
           </span>
           <span fg={link.done ? theme.textDim : theme.text}> {link.summary}</span>
         </text>

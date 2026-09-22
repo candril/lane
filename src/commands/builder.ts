@@ -120,6 +120,14 @@ export function buildCommands(ctx: CommandContext): Command[] {
       { id: "issue:new-top", label: "New top-level issue", category: "issue", shortcut: "⇧N" },
     )
   }
+  if (ctx.canUndoCreate) {
+    commands.push({
+      id: "issue:undo-create",
+      label: "Undo the last create",
+      category: "issue",
+      shortcut: "u",
+    })
+  }
 
   // View: only the modes and groupings you are not already in.
   const views = [

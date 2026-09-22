@@ -21,9 +21,10 @@
   backlog list, the focused row's parent (a sub-task's own parent, or the root itself);
   under the detail viewer, the item *its* cursor is on ([057](./057-detail-navigation.md)),
   since that is the selection while it is up — the card behind the overlay is not.
-- New issues land in the **first column** (no create-then-move); optimistic was
-  dropped for a simpler **pending insert** (card appears once the provider
-  returns the real key). Defaults (team/component) come from board config.
+- New issues land in the **first column** (no create-then-move), **optimistically**:
+  the card appears on Enter under a placeholder key, with undo, and a failure keeps
+  what was typed ([059](./059-optimistic-create.md)). Defaults (team/component) come
+  from board config.
 
 ## Description
 

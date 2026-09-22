@@ -1,9 +1,17 @@
-import { useRef, useState, type Dispatch, type MutableRefObject, type SetStateAction } from "react"
+import {
+  useEffect,
+  useRef,
+  useState,
+  type Dispatch,
+  type MutableRefObject,
+  type SetStateAction,
+} from "react"
 import { typeGlyph } from "./utils/glyphs"
 import type { Lane, ListRow } from "./grouping"
 import type { Board as BoardModel, IssueType, Task } from "./types"
 import type { BoardProvider } from "./providers/provider"
 import type { TabMode } from "./tabs"
+import { discardIssue, isPendingKey, landPending, pendingKey, withoutTask } from "./pendingCreate"
 
 /**
  * An in-progress quick-add. `type` may be toggled (Ctrl-T); `contextParent` is
@@ -18,9 +26,26 @@ export interface Draft {
    * - `issue` → a sub-task under a story/task/bug.
    */
   contextParent: { key: string; color: string; kind: "epic" | "issue" } | null
-  submitting: boolean
-  error?: string
+  /** Seeds the field — a retry reopens with what was typed (specs/059). */
+  summary?: string
 }
+
+/**
+ * The bottom line that follows a create (specs/059). `pending` and `created` offer undo;
+ * `failed` stays until dismissed, and carries the draft back when the create was the
+ * thing that failed.
+ */
+export type CreateNotice =
+  | { kind: "pending"; tempKey: string; summary: string; openWhenLanded?: boolean }
+  | { kind: "created"; tempKey: string; key: string }
+  /**
+   * Undo asked to confirm (specs/059): it deletes a real issue, which no other key in
+   * lane does. `back` is the notice it returns to when the answer is no.
+   */
+  | { kind: "confirm"; subject: string; back: CreateNotice }
+  | { kind: "failed"; message: string; retry?: Draft }
+
+const CREATED_NOTICE_MS = 5000
 
 /** Top-level types the Ctrl-T toggle cycles through (no context parent) — incl. epic. */
 const TOP_LEVEL_TYPES: IssueType[] = ["story", "task", "bug", "epic"]
@@ -70,9 +95,9 @@ export function createParent(
 
 /**
  * The quick-add flow: open a draft that picks a sensible parent + type from the
- * current focus, cycle the type (Ctrl-T), and create through the provider — adding
- * the card only once it lands (specs/012). Optimistic-insert isn't safe here because
- * the server assigns the key/column.
+ * current focus, cycle the type (Ctrl-T), and create through the provider. The card
+ * lands at once under a placeholder key and takes the real one when Jira answers
+ * (specs/059); the notice that follows offers undo, or keeps a failure until dismissed.
  */
 export function useCreateDraft(args: {
   board: BoardModel
@@ -87,12 +112,44 @@ export function useCreateDraft(args: {
   setBoard: Dispatch<SetStateAction<BoardModel>>
   pendingMutations: MutableRefObject<number>
   settleMutation: () => void
+  showToast: (message: string) => void
+  /** Open the viewer on an issue — what `↵` on the notice does (specs/059). */
+  openIssue: (key: string) => void
 }) {
   const { board, view, focusedKey, laneHeader, rows, listFocus, detailAnchor } = args
-  const { provider, setBoard, pendingMutations, settleMutation } = args
+  const { provider, setBoard, pendingMutations, settleMutation, showToast, openIssue } = args
   const [creating, setCreating] = useState<Draft | null>(null)
   // Sticky last-used create type — seeds the next quick-add outside a lane.
   const lastTypeRef = useRef<IssueType>("task")
+  const pendingCount = useRef(0)
+  // Placeholders undone while their POST was still out: the POST can't be recalled,
+  // so the issue it creates is discarded as soon as it lands.
+  const cancelled = useRef(new Set<string>())
+
+  const [notice, setNotice] = useState<CreateNotice | null>(null)
+  // Async landings decide off the notice as it is *now*, not as their closure saw it.
+  const noticeRef = useRef<CreateNotice | null>(null)
+  const noticeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(
+    () => () => {
+      if (noticeTimer.current) {
+        clearTimeout(noticeTimer.current)
+      }
+    },
+    [],
+  )
+
+  function showNotice(next: CreateNotice | null) {
+    if (noticeTimer.current) {
+      clearTimeout(noticeTimer.current)
+      noticeTimer.current = null
+    }
+    noticeRef.current = next
+    setNotice(next)
+    if (next?.kind === "created") {
+      noticeTimer.current = setTimeout(() => showNotice(null), CREATED_NOTICE_MS)
+    }
+  }
 
   /**
    * The issue in context for a quick-add. The viewer owns it while it is up
@@ -114,9 +171,22 @@ export function useCreateDraft(args: {
   /** Open the quick-add line. `n` defaults to a sub-task under the issue in context
    * (its own parent if that issue is a sub-task, so `n` on one gives a sibling).
    * `topLevel` (N) skips that and always starts a top-level issue of the sticky
-   * last-used type. */
+   * last-used type. Over a failed create, `n` reopens that draft instead and `N`
+   * drops it (specs/059). */
   function startCreate(topLevel: boolean) {
+    const failed = noticeRef.current?.kind === "failed" ? noticeRef.current : null
+    if (failed) {
+      showNotice(null)
+      if (!topLevel && failed.retry) {
+        setCreating(failed.retry)
+        return
+      }
+    }
     const contextParent = createParent(topLevel ? undefined : contextAnchor(), board.tasks)
+    if (isPendingKey(contextParent?.key)) {
+      showToast("still being created")
+      return
+    }
     // Under an epic → a child issue (default the sticky type if it's a valid child,
     // else a story). Under a story/task/bug → a sub-task. No context → sticky type.
     const type = !contextParent
@@ -126,7 +196,7 @@ export function useCreateDraft(args: {
           ? lastTypeRef.current
           : "story"
         : "subtask"
-    setCreating({ type, contextParent, submitting: false })
+    setCreating({ type, contextParent })
   }
 
   function cycleCreateType() {
@@ -140,15 +210,14 @@ export function useCreateDraft(args: {
     })
   }
 
-  /** Pending insert: create through the provider, add the card only once it lands. */
   function submitCreate(summary: string) {
     const draft = creating
-    if (!draft || draft.submitting) {
+    if (!draft) {
       return
     }
     const trimmed = summary.trim()
+    setCreating(null)
     if (!trimmed) {
-      setCreating(null)
       return
     }
     const cp = draft.contextParent
@@ -157,7 +226,19 @@ export function useCreateDraft(args: {
     if (draft.type !== "subtask") {
       lastTypeRef.current = draft.type
     }
-    setCreating({ ...draft, submitting: true, error: undefined })
+    const tempKey = pendingKey(++pendingCount.current)
+    const placeholder: Task = {
+      key: tempKey,
+      summary: trimmed,
+      type: draft.type,
+      priority: "medium",
+      columnId: board.columns[0]?.id ?? "",
+      parentKey,
+      epicKey,
+      epicName: epicKey ? board.tasks.find((t) => t.key === epicKey)?.summary : undefined,
+    }
+    setBoard((b) => ({ ...b, tasks: [...b.tasks, placeholder] }))
+    showNotice({ kind: "pending", tempKey, summary: trimmed })
     pendingMutations.current++
     void (async () => {
       try {
@@ -167,19 +248,142 @@ export function useCreateDraft(args: {
           parentKey,
           epicKey,
         })
-        setBoard((b) => ({ ...b, tasks: [...b.tasks, task] }))
-        setCreating(null)
+        if (cancelled.current.delete(tempKey)) {
+          void discard(task)
+          return
+        }
+        setBoard((b) => landPending(b, tempKey, task))
+        const current = noticeRef.current
+        if (current?.kind === "pending" && current.tempKey === tempKey) {
+          showNotice({ kind: "created", tempKey, key: task.key })
+          // ↵ pressed while it was still in flight: open it now that there is
+          // something to open (specs/059).
+          if (current.openWhenLanded) {
+            openIssue(task.key)
+          }
+        }
       } catch (err) {
-        setCreating((d) =>
-          d
-            ? { ...d, submitting: false, error: err instanceof Error ? err.message : String(err) }
-            : d,
-        )
+        setBoard((b) => withoutTask(b, tempKey))
+        if (!cancelled.current.delete(tempKey)) {
+          showNotice({
+            kind: "failed",
+            message: `not created: ${errorText(err)}`,
+            retry: { ...draft, summary: trimmed },
+          })
+        }
       } finally {
         settleMutation()
       }
     })()
   }
 
-  return { creating, setCreating, startCreate, cycleCreateType, submitCreate }
+  /**
+   * `↵` on the notice: open the new issue in the viewer, where its children, assignee
+   * and the rest can be set. Before the key lands there is nothing to open, so the
+   * press is remembered and honoured on arrival (specs/059).
+   */
+  function openCreated() {
+    const current = noticeRef.current
+    if (current?.kind === "created") {
+      showNotice(null)
+      openIssue(current.key)
+    } else if (current?.kind === "pending") {
+      showNotice({ ...current, openWhenLanded: true })
+    }
+  }
+
+  /** `u` on the notice: ask first — this deletes an issue (specs/059). */
+  function undoCreate() {
+    const current = noticeRef.current
+    if (current?.kind !== "pending" && current?.kind !== "created") {
+      return
+    }
+    showNotice({
+      kind: "confirm",
+      subject: current.kind === "created" ? current.key : `“${current.summary}”`,
+      back: current,
+    })
+  }
+
+  /** The answer is no: back to the notice it interrupted. */
+  function cancelUndoCreate() {
+    const current = noticeRef.current
+    showNotice(current?.kind === "confirm" ? current.back : current)
+  }
+
+  /** The answer is yes: drop the card and delete the issue behind it. */
+  function confirmUndoCreate() {
+    const confirming = noticeRef.current
+    if (confirming?.kind !== "confirm") {
+      return
+    }
+    const current = confirming.back
+    if (current.kind !== "pending" && current.kind !== "created") {
+      return
+    }
+    showNotice(null)
+    if (current.kind === "pending") {
+      cancelled.current.add(current.tempKey)
+      setBoard((b) => withoutTask(b, current.tempKey))
+      showToast("create undone")
+      return
+    }
+    const task = board.tasks.find((t) => t.key === current.key)
+    setBoard((b) => withoutTask(b, current.key))
+    if (task) {
+      void discard(task)
+    }
+  }
+
+  /**
+   * Delete a landed issue whose card is already gone, or close it where deleting is
+   * refused — in which case it still exists, so its card comes back in the last
+   * column. When both fail the card comes back as it was.
+   */
+  async function discard(task: Task) {
+    const doneColumnId = board.columns[board.columns.length - 1]?.id ?? task.columnId
+    pendingMutations.current++
+    try {
+      const result = await discardIssue(provider, task.key, doneColumnId)
+      if (result.deleted) {
+        showToast(`${task.key} deleted`)
+      } else {
+        const closed = { ...task, columnId: doneColumnId, resolution: result.resolution }
+        setBoard((b) => ({ ...b, tasks: [...b.tasks, closed] }))
+        showToast(`${task.key} closed as ${result.resolution} (couldn't delete)`)
+      }
+    } catch (err) {
+      setBoard((b) => ({ ...b, tasks: [...b.tasks, task] }))
+      showNotice({ kind: "failed", message: `${task.key} not undone: ${errorText(err)}` })
+    } finally {
+      settleMutation()
+    }
+  }
+
+  /** Esc over a failure: only a failure — the undo notice leaves by itself. */
+  function dismissCreateFailure(): boolean {
+    if (noticeRef.current?.kind !== "failed") {
+      return false
+    }
+    showNotice(null)
+    return true
+  }
+
+  return {
+    creating,
+    setCreating,
+    startCreate,
+    cycleCreateType,
+    submitCreate,
+    createNotice: notice,
+    openCreated,
+    undoCreate,
+    cancelUndoCreate,
+    confirmUndoCreate,
+    dismissCreateFailure,
+  }
+}
+
+function errorText(err: unknown): string {
+  return err instanceof Error ? err.message : String(err)
 }

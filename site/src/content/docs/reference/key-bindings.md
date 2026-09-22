@@ -57,6 +57,8 @@ launch.
 | `⌫` | back out of the viewer |
 | `n` / `⇧N` | new issue, in the cursor's context / top-level |
 | `^T` | cycle the issue type — while the create prompt is open |
+| `u` | undo the last create — asks first (`y` deletes, `n` keeps) |
+| `↵` | on the create notice: open the new issue in the viewer |
 | `e` | rename |
 | `i` | edit title and body in `$EDITOR` |
 | `a` | assign |

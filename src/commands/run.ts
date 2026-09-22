@@ -23,6 +23,7 @@ export interface CommandActions {
   copyTitle: () => void
   copyDescription: () => void
   startCreate: (topLevel: boolean) => void
+  undoCreate: () => void
   setView: (mode: TabMode) => void
   setGrouping: (grouping: Grouping) => void
   toggleEpicTags: () => void
@@ -82,6 +83,8 @@ export function runCommand(id: string, actions: CommandActions): void {
       return actions.startCreate(false)
     case "issue:new-top":
       return actions.startCreate(true)
+    case "issue:undo-create":
+      return actions.undoCreate()
     case "view:board":
       return actions.setView("board")
     case "view:list":
