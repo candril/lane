@@ -11,6 +11,10 @@ All notable changes to lane are recorded here. The format follows
 - A new issue appears the moment you press Enter instead of after Jira answers, which took one to
   three seconds. It shows `new…` in place of its key until the key arrives, and can't be edited or
   moved until then.
+- `⇧H` / `⇧L` with a selection move every marked issue one status, each from its own. They used
+  to move only the issue under the cursor.
+- `⇧J` / `⇧K` in the backlog view take a marked block across the divider between the backlog and
+  the first column, as they already did for a single issue. The block used to stop there.
 
 ### Added
 

@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test"
-import { rankPlan } from "./rank"
+import { rankMovers, rankPlan } from "./rank"
 
 interface Row {
   key: string
@@ -91,4 +91,25 @@ test("ranking stays at one level: a sub-task ranks against its siblings", () => 
 
 test("marks at another level do not join the block", () => {
   expect(plan("A B< x.B* y.B* C", 1)).toEqual({ keys: ["B"], neighbor: "C" })
+})
+
+function movers(shape: string) {
+  const { rows, cursor, marked } = parse(shape)
+  return rankMovers(rows, cursor, {
+    key: (r) => r.key,
+    sibling: (r, at) => r.parent === at.parent,
+    marked: (r) => marked.has(r.key),
+  }).map((r) => r.key)
+}
+
+test("the movers are the marked siblings, which is what crosses the backlog divider", () => {
+  expect(movers("A B*< C D*")).toEqual(["B", "D"])
+})
+
+test("with nothing marked the cursor's issue moves alone", () => {
+  expect(movers("A B< C")).toEqual(["B"])
+})
+
+test("marks at another level stay out of the block", () => {
+  expect(movers("A*< B C.A* D*")).toEqual(["A", "D"])
 })

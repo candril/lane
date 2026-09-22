@@ -1165,6 +1165,7 @@ export function App({
     submitEdit,
     submitIssueEdit,
     bulkMoveTo,
+    bulkTransition,
     bulkResolution,
     bulkAssign,
     bulkSetEpic,
@@ -2172,8 +2173,8 @@ export function App({
    * its first column, off the board is the backlog status nearest that column — the
    * one an issue would step through on its way back out.
    */
-  function crossSegment(key: string, to: "board" | "backlog") {
-    anchorRow(key)
+  function crossSegment(keys: string[], cursorKey: string, to: "board" | "backlog") {
+    anchorRow(cursorKey)
     const first = board.columns[0]
     if (!first) {
       return
@@ -2182,8 +2183,12 @@ export function App({
     if (!target) {
       return
     }
-    showToast(`${key} → ${target.title}`)
-    void moveTo(key, target.id)
+    if (keys.length === 1) {
+      showToast(`${keys[0]} → ${target.title}`)
+      void moveTo(keys[0]!, target.id)
+    } else {
+      void bulkMoveTo(keys, target.id)
+    }
   }
 
   function setRowExpanded(open: boolean) {
@@ -2251,6 +2256,7 @@ export function App({
     foldSubtasks,
     foldRows,
     crossSegment,
+    stepMarked: (direction) => void bulkTransition([...selection], direction),
     anchorRow,
     collapseColumn,
     expandAllColumns,

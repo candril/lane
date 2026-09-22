@@ -6,7 +6,7 @@ import type { Draft } from "./useCreateDraft"
 import type { Editing } from "./useDialogs"
 import type { Board as BoardModel } from "./types"
 import type { ChildVisibility, SubtaskLayout } from "./config/types"
-import { rankPlan } from "./rank"
+import { rankMovers, rankPlan } from "./rank"
 import type { BoardProvider } from "./providers/provider"
 import type { TabMode } from "./tabs"
 
@@ -76,7 +76,10 @@ export interface BoardKeymapContext {
   /** Expand/collapse every row of a list or backlog view (specs/044). */
   foldRows: (open: boolean) => void
   /** Move an issue between the backlog tab's segments — onto the board or off it. */
-  crossSegment: (key: string, to: "board" | "backlog") => void
+  /** `keys` cross the divider; `cursorKey` is the row the cursor follows. */
+  crossSegment: (keys: string[], cursorKey: string, to: "board" | "backlog") => void
+  /** ⇧H/⇧L over a selection: every marked issue steps one status (specs/056). */
+  stepMarked: (direction: -1 | 1) => void
   /** Keep the cursor on this issue once the row set has been rebuilt. */
   anchorRow: (key: string) => void
   /** Global search (specs/046). */
@@ -936,24 +939,25 @@ export function useBoardKeymap(ctx: BoardKeymapContext) {
         // global order, which among its siblings is arbitrary. Running out of siblings
         // means it is already first or last, and the row stays where it is. Marked
         // rows move as one block, gathered at the cursor (specs/056).
-        const plan = rankPlan(ctx.rows, ctx.listFocus, dir, {
-          key: (row) => row.task.key,
-          sibling: (row, cursorRow) =>
+        const rowsOf = {
+          key: (row: ListRow) => row.task.key,
+          sibling: (row: ListRow, cursorRow: ListRow) =>
             cursorRow.depth === 0
               ? row.depth === 0
               : row.task.parentKey === cursorRow.task.parentKey,
-          marked: (row) => ctx.marked(row.task.key),
-        })
+          marked: (row: ListRow) => ctx.marked(row.task.key),
+        }
+        const plan = rankPlan(ctx.rows, ctx.listFocus, dir, rowsOf)
         const neighbor = plan?.neighbor
         // Ranking past the end of a backlog segment moves the issue *across* the
         // divider instead — onto the board or off it (specs/044), which is what
         // dragging an issue over it does in Jira. The direction decides, not the
         // neighbouring row: with an empty first column there is no row to compare
         // against, and promoting into it has to keep working. Only whole issues
-        // cross; a sub-task ranks among its siblings.
-        // A block stops at the divider: crossing it is a status change (specs/044),
-        // and a bulk transition is `⇧S` over the selection, not a reorder.
-        if (focused && focused.depth === 0 && focused.segment && (plan?.keys.length ?? 1) === 1) {
+        // cross; a sub-task ranks among its siblings. A marked block crosses whole
+        // (specs/056) — just the marks on the cursor's side, since the others are
+        // already over there.
+        if (focused && focused.depth === 0 && focused.segment) {
           const leaving = neighbor?.segment !== focused.segment
           const to = dir < 0 ? "board" : "backlog"
           // Only a *status* backlog's divider is crossable by ranking. On a sprint
@@ -962,7 +966,10 @@ export function useBoardKeymap(ctx: BoardKeymapContext) {
           // moving the issue through a workflow it was never asked to enter.
           const crossable = focused.segment === "board" || focused.segment === "backlog"
           if (leaving && crossable && to !== focused.segment) {
-            ctx.crossSegment(focused.task.key, to)
+            const movers = rankMovers(ctx.rows, ctx.listFocus, rowsOf)
+              .filter((row) => row.segment === focused.segment)
+              .map((row) => row.task.key)
+            ctx.crossSegment(movers, focused.task.key, to)
             return
           }
           if (leaving) {
@@ -983,6 +990,8 @@ export function useBoardKeymap(ctx: BoardKeymapContext) {
           ctx.anchorRow(focused.task.key)
           ctx.applyRank(plan.keys, neighbor.task.key, dir)
         }
+      } else if (shift && (name === "l" || name === "h") && ctx.selectionCount > 0) {
+        ctx.stepMarked(name === "l" ? 1 : -1)
       } else if (shift && (name === "l" || name === "h")) {
         const row = ctx.rows[ctx.listFocus]
         if (row) {
@@ -1021,10 +1030,13 @@ export function useBoardKeymap(ctx: BoardKeymapContext) {
       }
     } else if (name === "space") {
       ctx.toggleMark()
-    } else if (shift && (name === "h" || name === "left")) {
-      ctx.moveFocusedCard(-1)
-    } else if (shift && (name === "l" || name === "right")) {
-      ctx.moveFocusedCard(1)
+    } else if (shift && (name === "h" || name === "left" || name === "l" || name === "right")) {
+      const dir = name === "h" || name === "left" ? -1 : 1
+      if (ctx.selectionCount > 0) {
+        ctx.stepMarked(dir)
+      } else {
+        ctx.moveFocusedCard(dir)
+      }
     } else if (shift && (name === "k" || name === "up")) {
       ctx.rankFocusedCard(-1)
     } else if (shift && (name === "j" || name === "down")) {

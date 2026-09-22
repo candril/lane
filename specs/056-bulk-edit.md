@@ -61,9 +61,16 @@ Nothing new to learn: the same keys, the same pickers, the same palette submenus
   not it is itself marked, which makes an unmarked cursor read as "bring them here". The
   ordering rule is one pure function ([`src/rank.ts`](../src/rank.ts)) so the board, the row
   views and the viewer's children cannot drift apart on it.
-  `⇧H`/`⇧L` over a selection stays out: crossing the backlog divider by ranking is a status
-  change ([044](./044-board-backlog.md)), and a bulk transition is `⇧S`, not a reorder — so
-  a block stops at the divider.
+  **At the backlog divider the block crosses whole** ([044](./044-board-backlog.md)), as a
+  single issue does: ranking off the end of a segment moves every mark on the cursor's side
+  into the other segment, as one bulk transition (per-issue writes and reverts, one toast).
+  Marks already on the far side are left where they are.
+- **`⇧H`/`⇧L` step every marked issue one status**, each from its own, so a mixed
+  selection stays mixed, one column further along; one already at that end of the workflow
+  stays put. This is the move the backlog screen exists for — promoting a batch onto the
+  board — and `⇧S` is no substitute: it makes you pick a status from a list where `⇧L` is one
+  key, and it sets one status for all rather than stepping each. There is no ordering
+  question here, unlike rank: every issue moves independently.
 
 ## Out of Scope
 

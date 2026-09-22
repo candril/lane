@@ -17,6 +17,28 @@ export interface RankPlan<T> {
   neighbor: T
 }
 
+/**
+ * The issues a ⇧J/⇧K would move: the marked siblings of the cursor's item, else that
+ * item alone. Separate from {@link rankPlan} because the backlog divider needs the
+ * movers when there is no neighbour to rank against (specs/044).
+ */
+export function rankMovers<T>(
+  items: T[],
+  cursor: number,
+  of: {
+    key: (item: T) => string
+    sibling: (item: T, cursorItem: T) => boolean
+    marked: (item: T) => boolean
+  },
+): T[] {
+  const focused = items[cursor]
+  if (!focused) {
+    return []
+  }
+  const block = items.filter((item) => of.sibling(item, focused) && of.marked(item))
+  return block.length > 0 ? block : [focused]
+}
+
 export function rankPlan<T>(
   items: T[],
   cursor: number,
@@ -33,8 +55,7 @@ export function rankPlan<T>(
     return null
   }
   const sibling = (item: T) => of.sibling(item, focused)
-  const block = items.filter((item) => sibling(item) && of.marked(item))
-  const moving = block.length > 0 ? block : [focused]
+  const moving = rankMovers(items, cursor, of)
   const movingKeys = new Set(moving.map(of.key))
   // Start at the cursor's own card when it is not one of the movers — "bring the
   // marked ones here" — and one past it when it is, since it cannot anchor itself.

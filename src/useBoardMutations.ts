@@ -12,6 +12,25 @@ interface BulkFailure {
 }
 
 /**
+ * Where each issue lands when a selection steps one status (specs/056): from its own
+ * status, not the cursor's. One already at that end of the workflow is left out.
+ */
+export function stepTargets(
+  board: BoardModel,
+  tasks: Task[],
+  direction: -1 | 1,
+): Map<string, string> {
+  const moves = new Map<string, string>()
+  for (const task of tasks) {
+    const target = nextStatus(board, task.columnId, direction)
+    if (target) {
+      moves.set(task.key, target.id)
+    }
+  }
+  return moves
+}
+
+/**
  * Every board-writing operation, each optimistic: apply to the local board, call the
  * provider, revert on failure — the same path the real Jira transition takes. The
  * `transition`/`applyRank` primitives take an `onApplied(next)` callback so the caller
@@ -492,30 +511,49 @@ export function useBoardMutations(args: {
 
   /** Move several issues to one status; `resolution` makes it a bulk close (specs/053). */
   async function bulkMoveTo(keys: string[], toColumnId: string, resolution?: string) {
-    const targets = bulkTargets(keys).filter((t) => t.columnId !== toColumnId)
+    const moves = new Map(bulkTargets(keys).map((t) => [t.key, toColumnId]))
+    await moveEach(moves, resolution, resolution ? `closed as ${resolution}` : "moved")
+  }
+
+  /**
+   * ⇧H/⇧L over a selection (specs/056): every marked issue steps one status from its
+   * own, so a mixed selection stays mixed, one column further along. An issue already
+   * at that end of the workflow stays put.
+   */
+  async function bulkTransition(keys: string[], direction: -1 | 1) {
+    await moveEach(stepTargets(board, bulkTargets(keys), direction), undefined, "moved")
+  }
+
+  /** The optimistic bulk transition behind both: `moves` maps each key to its status. */
+  async function moveEach(
+    moves: Map<string, string>,
+    resolution: string | undefined,
+    verb: string,
+  ) {
+    const targets = bulkTargets([...moves.keys()]).filter((t) => t.columnId !== moves.get(t.key))
     if (targets.length === 0) {
       return
     }
     const originals = new Map(targets.map((t) => [t.key, t]))
-    const closing = toColumnId === board.columns[board.columns.length - 1]?.id
-    const landed = resolution ?? (closing ? provider.defaultResolution : undefined)
+    const doneId = board.columns[board.columns.length - 1]?.id
+    const landed = (to: string) =>
+      resolution ?? (to === doneId ? provider.defaultResolution : undefined)
     setBoard((b) => ({
       ...b,
-      tasks: b.tasks.map((t) =>
-        originals.has(t.key)
-          ? { ...t, columnId: toColumnId, resolution: landed ?? t.resolution }
-          : t,
-      ),
+      tasks: b.tasks.map((t) => {
+        const to = originals.has(t.key) ? moves.get(t.key) : undefined
+        return to ? { ...t, columnId: to, resolution: landed(to) ?? t.resolution } : t
+      }),
     }))
     const { ok, failed } = await fanOut([...originals.keys()], (key) =>
-      provider.moveTask(key, toColumnId, resolution),
+      provider.moveTask(key, moves.get(key)!, resolution),
     )
     revertFailed(originals, failed, (t, original) => ({
       ...t,
       columnId: original.columnId,
       resolution: original.resolution,
     }))
-    bulkToast(ok.length, resolution ? `closed as ${resolution}` : "moved", failed)
+    bulkToast(ok.length, verb, failed)
   }
 
   /** Rewrite the reason on several already-closed issues (specs/053), no transition. */
@@ -668,6 +706,7 @@ export function useBoardMutations(args: {
     submitEdit,
     submitIssueEdit,
     bulkMoveTo,
+    bulkTransition,
     bulkResolution,
     bulkAssign,
     bulkSetEpic,

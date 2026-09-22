@@ -22,7 +22,7 @@ const LEFT: Group[] = [
       ["gg / ⇧G", "jump to top / bottom"],
       ["^D / ^U", "half a screen of stops down / up"],
       ["s", "jump to card / lane · in the viewer: to a link"],
-      ["⇧H ⇧L", "move card (change status)"],
+      ["⇧H ⇧L", "move card / marked (change status)"],
       ["⇧J ⇧K", "reorder (rank) · cross the backlog divider"],
       ["h l / ↵", "fold / unfold a lane header or viewer section"],
       ["z a/o/c", "toggle / open / close the fold under the cursor"],

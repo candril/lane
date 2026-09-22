@@ -52,7 +52,7 @@ as a unified diff.
 | `⇧E` | set or detach the epic, from the epics on the board |
 | `⇧S` | set the status from the board's statuses |
 | `⇧R` | close as a reason — Jira's resolution — or change a closed issue's reason in hindsight |
-| `⇧H` / `⇧L` | move to the previous / next column |
+| `⇧H` / `⇧L` | move to the previous / next column — every marked issue, each from its own |
 | `⇧J` / `⇧K` | re-rank — the whole selection moves as one block |
 
 Every one of these is optimistic: the card changes at once, and snaps back with a toast if Jira
@@ -94,7 +94,11 @@ down a column become contiguous where the cursor sits on the first press, and st
 after that. Rank is a column's own order, so only the marks in the cursor's column and at its
 level take part — the toast says how many were left elsewhere. This one is a single write and
 reverts whole: the issues are ranked relative to each other, so half of it is not a partial
-success but a different order.
+success but a different order. In the backlog view the block crosses the divider whole, the
+same as a single issue.
+
+`⇧H` / `⇧L` step every marked issue one status, each from its own, so promoting a batch from the
+backlog onto the board is mark, mark, mark, `⇧L`.
 
 ## Copying
 

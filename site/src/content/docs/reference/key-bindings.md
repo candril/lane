@@ -18,7 +18,7 @@ Press `?` at any time for this list in the app. `esc`, `?` or `q` closes it.
 | `gg` / `⇧G` | jump to top / bottom (in the viewer: first / last item) |
 | `^D` / `^U` | half a screen of stops down / up |
 | `s` | jump to a card or lane — labels appear, type one; in the viewer: to a link |
-| `⇧H` `⇧L` | move the card to the previous / next column (a status transition) |
+| `⇧H` `⇧L` | move the card — or every marked one — to the previous / next column (a status transition) |
 | `⇧J` `⇧K` | reorder (rank) — the marked block moves as one; crosses the backlog divider |
 | `h` `l` / `↵` | on a lane header or a viewer section: fold / unfold |
 | `z a` / `z o` / `z c` | toggle / open / close the fold under the cursor: sub-tasks, a lane, a row, a viewer list |
@@ -81,7 +81,8 @@ Every mutation is optimistic — the board updates at once and reverts if Jira r
 | `⇧V` | visual range, in the list and the viewer — again ends it, keeping the selection |
 | `esc` | clear the selection |
 
-With a selection, `⇧S`, `a`, `#`, `⇧E`, `⇧R` and the copy keys act on every marked issue.
+With a selection, `⇧S`, `a`, `#`, `⇧E`, `⇧R`, `⇧H` / `⇧L` and the copy keys act on every marked
+issue.
 
 ## Find
 
