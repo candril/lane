@@ -23,8 +23,9 @@ and — the part that matters — the same write. Nothing is a second implementa
 
 - **`Ctrl+P` opens** a centered overlay: a fuzzy-filtered command list over a query
   field. `↑/↓` (and `^p`/`^n`) move, `Enter` runs, `Esc` closes, `^P` closes again.
-  `⇧P` opens it as well — the alias for the one place `^P` means something else, the
-  viewer, where `^N`/`^P` walk its items ([057](./057-detail-navigation.md)).
+  `⇧P` opens it as well. That alias exists because the viewer once took `^P` for its own
+  cursor ([057](./057-detail-navigation.md)); it no longer does — the palette opens with
+  `^P` everywhere, the viewer included — and the alias stays for the fingers that learnt it.
 - **State-aware**: a command that can't act right now is absent, so `Enter` never lands
   on a no-op — issue commands need a focused issue, "clear filter" needs a filter, an
   ad-hoc tab is the only kind that can be renamed or closed, the view you are in is not

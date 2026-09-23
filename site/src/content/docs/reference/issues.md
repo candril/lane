@@ -13,7 +13,7 @@ history, and the description rendered as Markdown (Jira's ADF is converted on th
 
 ![The issue viewer](../../../assets/screenshots/detail.png)
 
-The viewer is navigable. `j` / `k` (or `^N` / `^P`) walk its links — the parent, the epic, each
+The viewer is navigable. `j` / `k` (or `^N`) walk its links — the parent, the epic, each
 child, each history entry. `↵` on a link drills into that issue; `⌫` backs out again, as many
 levels as you went. `/` filters the children. `gg` / `⇧G` jump to the first and last item.
 

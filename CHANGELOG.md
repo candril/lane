@@ -15,6 +15,8 @@ All notable changes to lane are recorded here. The format follows
   to move only the issue under the cursor.
 - `⇧J` / `⇧K` in the backlog view take a marked block across the divider between the backlog and
   the first column, as they already did for a single issue. The block used to stop there.
+- `^P` opens the command palette in the issue viewer too. It used to walk the viewer's items
+  there, which is what `j` / `k` and `^N` already do, and left `⇧P` as the only way in.
 
 ### Added
 

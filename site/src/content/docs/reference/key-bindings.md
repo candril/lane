@@ -53,7 +53,7 @@ launch.
 | Keys | Action |
 | --- | --- |
 | `↵` | view the issue; in the viewer: open the selected link, or show a text edit as a diff |
-| `j` `k` / `^N` `^P` | in the viewer: walk its links, sections and history |
+| `j` `k` / `^N` | in the viewer: walk its links, sections and history |
 | `⌫` | back out of the viewer |
 | `n` / `⇧N` | new issue, in the cursor's context / top-level |
 | `^T` | cycle the issue type — while the create prompt is open |

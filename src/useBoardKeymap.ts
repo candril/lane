@@ -617,10 +617,11 @@ export function useBoardKeymap(ctx: BoardKeymapContext) {
         ctx.toggleMark()
         return
       }
-      // ^N/^P walk the items too, as they do in every prompt's list. That shadows the
-      // palette's ^P while the viewer is up, which is why ⇧P opens it as well.
-      if (key.ctrl && (name === "n" || name === "p")) {
-        ctx.moveDetailFocus(name === "n" ? 1 : -1)
+      // ^N walks the items, as it does in every prompt's list. ^P has no such alias:
+      // j/k already walk them, and shadowing the palette in the one view where you
+      // most want a named action costs more than the symmetry is worth (specs/010).
+      if (key.ctrl && name === "n") {
+        ctx.moveDetailFocus(1)
         return
       }
       // j/k walk the issue and its links — the description scrolls on the ctrl keys
@@ -674,8 +675,8 @@ export function useBoardKeymap(ctx: BoardKeymapContext) {
     }
 
     // ^P opens the command palette (specs/010) — every action, and the field editors
-    // as submenus, without needing to know the direct key. ⇧P is its alias for the
-    // one place ^P means something else: the viewer, where it walks the items.
+    // as submenus, without needing to know the direct key. ⇧P is an alias, from when
+    // the viewer used ^P for its own cursor.
     if ((key.ctrl && name === "p") || (name === "p" && shift)) {
       ctx.openPalette()
       return

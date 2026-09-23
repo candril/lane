@@ -150,7 +150,7 @@ triaging what hangs off it stop being separate activities.
 
 | Key | Action |
 |-----|--------|
-| `j` `k` `^N` `^P` | select the issue / its epic / its parent / its children (`⇧P` opens the palette here, since `^P` walks) |
+| `j` `k` `^N` | select the issue / its epic / its parent / its children (`^P` is the palette here as everywhere — `j`/`k` already walk, so the viewer doesn't take it) |
 | `↵` | open the selected link (on the issue itself: close) |
 | `⌫` | back to the issue drilled in from, else close |
 | `/` | filter the children (the viewer's own filter; the board is untouched) |
