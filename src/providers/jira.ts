@@ -594,6 +594,14 @@ export function createJiraProvider(config: JiraConfig): BoardProvider {
       }
     },
 
+    async setType(key: string, type: IssueType): Promise<void> {
+      await logRequest(`retype ${key} → ${jiraTypeName(type, config)}`, async () => {
+        await client.request("PUT", `/rest/api/3/issue/${key}`, {
+          fields: { issuetype: { name: jiraTypeName(type, config) } },
+        })
+      })
+    },
+
     async editSummary(key: string, summary: string): Promise<void> {
       await logRequest(`edit ${key} summary`, async () => {
         await client.request("PUT", `/rest/api/3/issue/${key}`, { fields: { summary } })

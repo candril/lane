@@ -26,6 +26,9 @@ All notable changes to lane are recorded here. The format follows
   `n` keeps): the issue is deleted, or, where Jira doesn't allow deleting, closed as Won't Do.
 - A create Jira refuses leaves a notice with the reason until `esc`, and `n` reopens the prompt
   with what you typed.
+- Change the type an issue was filed as: *Change type of SHOP-1…* in the command palette, over
+  one issue or a whole selection. Story, task and bug only — turning something into a sub-task or
+  an epic is Jira's Move wizard, which its API doesn't offer.
 
 ## [0.3.0] — 2026-09-21
 

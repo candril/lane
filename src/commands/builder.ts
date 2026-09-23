@@ -52,6 +52,14 @@ export function buildCommands(ctx: CommandContext): Command[] {
       },
     )
   }
+  if ((issue || selected > 0) && ctx.canRetype) {
+    commands.push({
+      id: "issue:type",
+      label: `Change type of ${subject}…`,
+      category: "issue",
+      submenu: "type",
+    })
+  }
   if (issue) {
     commands.push(
       { id: "issue:detail", label: `View ${issue}`, category: "issue", shortcut: "↵" },

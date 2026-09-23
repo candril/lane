@@ -538,6 +538,12 @@ export function createMockProvider(data: MockData = sampleData()): BoardProvider
     async deleteIssue(key) {
       board.tasks = board.tasks.filter((t) => t.key !== key)
     },
+    async setType(key, type) {
+      const task = board.tasks.find((t) => t.key === key)
+      if (task) {
+        task.type = type
+      }
+    },
     issueUrl(key) {
       // Placeholder so the open/copy-URL actions are exercisable offline.
       return `https://jira.example.com/browse/${key}`

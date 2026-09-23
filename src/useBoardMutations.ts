@@ -3,8 +3,11 @@ import { nextStatus } from "./grouping"
 import type { AssignCandidate } from "./assign"
 import type { PickItem } from "./components/Picker"
 import type { Editing } from "./useDialogs"
-import type { Board as BoardModel, Task } from "./types"
+import type { Board as BoardModel, IssueType, Task } from "./types"
 import type { BoardProvider } from "./providers/provider"
+
+/** The levels a field write can move between: a sub-task or an epic needs Move (specs/060). */
+export const RETYPABLE: IssueType[] = ["story", "task", "bug"]
 
 interface BulkFailure {
   key: string
@@ -286,6 +289,51 @@ export function useBoardMutations(args: {
       } finally {
         settleMutation()
       }
+    })()
+  }
+
+  /** Correct the type an issue was filed as (specs/060), optimistically. */
+  function submitType(key: string, type: IssueType) {
+    const previous = board
+    setBoard((b) => ({
+      ...b,
+      tasks: b.tasks.map((t) => (t.key === key ? { ...t, type } : t)),
+    }))
+    showToast(`${key} → ${type}`)
+    pendingMutations.current++
+    void (async () => {
+      try {
+        await provider.setType!(key, type)
+      } catch (err) {
+        setBoard(previous)
+        showToast(`type failed: ${err instanceof Error ? err.message : String(err)}`)
+      } finally {
+        settleMutation()
+      }
+    })()
+  }
+
+  /**
+   * The same over a selection (specs/056). A sub-task or an epic is left alone: its
+   * type can only change by re-parenting, which is Jira's Move wizard (specs/060).
+   */
+  function bulkSetType(keys: string[], type: IssueType) {
+    const targets = bulkTargets(keys).filter((t) => t.type !== type && RETYPABLE.includes(t.type))
+    if (targets.length === 0) {
+      return
+    }
+    const originals = new Map(targets.map((t) => [t.key, t]))
+    setBoard((b) => ({
+      ...b,
+      tasks: b.tasks.map((t) => (originals.has(t.key) ? { ...t, type } : t)),
+    }))
+    void (async () => {
+      const { ok, failed } = await fanOut([...originals.keys()], (key) =>
+        provider.setType!(key, type),
+      )
+      revertFailed(originals, failed, (t, original) => ({ ...t, type: original.type }))
+      const skipped = keys.length - targets.length
+      bulkToast(ok.length, skipped > 0 ? `→ ${type} · ${skipped} left alone` : `→ ${type}`, failed)
     })()
   }
 
@@ -701,6 +749,8 @@ export function useBoardMutations(args: {
     transition,
     applyRank,
     submitEpic,
+    submitType,
+    bulkSetType,
     submitLabels,
     submitAssign,
     submitEdit,

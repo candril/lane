@@ -46,7 +46,7 @@ import {
   type LaneOptions,
 } from "./grouping"
 import { rankPlan } from "./rank"
-import { columnColor, statusGlyph } from "./utils/glyphs"
+import { columnColor, statusGlyph, typeGlyph } from "./utils/glyphs"
 import { theme } from "./theme"
 import type { PickItem } from "./components/Picker"
 import type { ChildVisibility, SubtaskLayout } from "./config/types"
@@ -72,7 +72,7 @@ import { usePalette } from "./usePalette"
 import { buildCommands } from "./commands/builder"
 import { runCommand, type CommandActions } from "./commands/run"
 import type { Command, SubmenuKind } from "./commands/types"
-import { useBoardMutations } from "./useBoardMutations"
+import { RETYPABLE, useBoardMutations } from "./useBoardMutations"
 import { useBoardKeymap } from "./useBoardKeymap"
 import { useIssueDetail } from "./useIssueDetail"
 import { useSelection } from "./useSelection"
@@ -97,7 +97,7 @@ import {
   type Tab,
   type TabMode,
 } from "./tabs"
-import type { Board as BoardModel, Task } from "./types"
+import type { Board as BoardModel, IssueType, Task } from "./types"
 
 interface AppProps {
   /** Every configured board as a source, in tab order (specs/016, specs/044). */
@@ -1160,6 +1160,8 @@ export function App({
     transition,
     applyRank,
     submitEpic,
+    submitType,
+    bulkSetType,
     submitLabels,
     submitAssign,
     submitEdit,
@@ -1495,6 +1497,21 @@ export function App({
       })),
     [board.columns, board.backlog],
   )
+  // Offered only where it can act: a source that can write the type, and a target that
+  // isn't a sub-task or an epic (specs/060).
+  const canRetype =
+    !!provider.setType &&
+    editTargets().some((key) => {
+      const type = board.tasks.find((t) => t.key === key)?.type
+      return !!type && RETYPABLE.includes(type)
+    })
+
+  // A field write moves an issue only within its own level (specs/060), so these are
+  // the same three types for every issue that can be retyped at all.
+  const typeItems = useMemo<PickItem[]>(
+    () => RETYPABLE.map((type) => ({ value: type, label: type, color: typeGlyph(type).color })),
+    [],
+  )
   const resolutionItems = useMemo<PickItem[]>(
     () => resolutions.map((name) => ({ value: name, label: name })),
     [resolutions],
@@ -1522,6 +1539,7 @@ export function App({
         subtaskScope,
         canCreate: !source.query,
         canUndoCreate,
+        canRetype,
         canResolve: !!provider.listResolutions,
         issueDone: board.tasks.find((t) => t.key === currentKey)?.columnId === doneColumnId,
         detailOpen: !!detail,
@@ -1545,6 +1563,7 @@ export function App({
       subtaskScope,
       source.query,
       canUndoCreate,
+      canRetype,
       provider,
       board.tasks,
       doneColumnId,
@@ -1654,6 +1673,13 @@ export function App({
           current: sharedCurrent(sub.keys, (t) => t.resolution),
         }
       }
+      case "type":
+        return {
+          kind: "type",
+          title: editTitle("type", sub.keys),
+          items: typeItems,
+          current: sharedCurrent(sub.keys, (t) => t.type),
+        }
       case "epic":
         return {
           kind: "epic",
@@ -1674,6 +1700,7 @@ export function App({
     palette.submenu,
     board.tasks,
     statusItems,
+    typeItems,
     assignCandidates,
     epicItems,
     resolutionItems,
@@ -1717,6 +1744,8 @@ export function App({
         item,
         sub.keys.some((key) => board.tasks.find((t) => t.key === key)?.columnId !== doneColumnId),
       )
+    } else if (sub.kind === "type") {
+      submitTypeFor(sub.keys, item)
     } else if (sub.kind === "epic") {
       submitEpicFor(sub.keys, item)
     } else if (sub.kind === "assign") {
@@ -1774,6 +1803,19 @@ export function App({
       bulkAssign(keys, chosen, typed)
     } else if (keys[0]) {
       submitAssign(keys[0], chosen, typed)
+    }
+  }
+
+  /** Route a type pick to the single or bulk write (specs/060). */
+  function submitTypeFor(keys: string[], chosen: PickItem | null) {
+    const type = chosen?.value as IssueType | undefined
+    if (!type) {
+      return
+    }
+    if (keys.length > 1) {
+      bulkSetType(keys, type)
+    } else if (keys[0]) {
+      submitType(keys[0], type)
     }
   }
 

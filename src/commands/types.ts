@@ -13,7 +13,7 @@ export type CommandCategory = (typeof CATEGORY_ORDER)[number]
  * to the command list. Each of these fields has a direct key that opens the bottom-bar
  * editor instead — one write path, two surfaces.
  */
-export type SubmenuKind = "status" | "assign" | "epic" | "labels" | "resolution"
+export type SubmenuKind = "status" | "assign" | "epic" | "labels" | "resolution" | "type"
 
 export interface Command {
   id: string
@@ -53,6 +53,8 @@ export interface CommandContext {
   canCreate: boolean
   /** The latest quick-add can still be taken back (specs/059). */
   canUndoCreate: boolean
+  /** The source can write an issue's type, and the target(s) have one to change (specs/060). */
+  canRetype: boolean
   /** The source can report the workflow's resolutions, so a reason can be set (specs/053). */
   canResolve: boolean
   /** The focused issue sits in the done column — so a reason is amended, not a close made. */

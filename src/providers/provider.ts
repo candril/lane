@@ -1,4 +1,4 @@
-import type { Board, CreateInput, Task } from "../types"
+import type { Board, CreateInput, IssueType, Task } from "../types"
 
 /**
  * One issue as the detail view needs it (specs/007): the board's own record of it,
@@ -91,6 +91,11 @@ export interface BoardProvider {
    * closing the issue instead.
    */
   deleteIssue?(key: string): Promise<void>
+  /**
+   * Set an issue's type (specs/060) — within its own level of the hierarchy, which is
+   * all a field write can do. Optional: without it the type is fixed at create time.
+   */
+  setType?(key: string, type: IssueType): Promise<void>
   /** Rename an issue — set its summary/title. Rejects if the backend refuses. */
   editSummary(key: string, summary: string): Promise<void>
   /**

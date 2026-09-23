@@ -16,6 +16,7 @@ const BASE: CommandContext = {
   subtaskScope: "strict",
   canCreate: true,
   canUndoCreate: false,
+  canRetype: true,
   canResolve: true,
   issueDone: false,
   selectionCount: 0,
@@ -52,8 +53,21 @@ test("the field commands descend into a submenu instead of acting", () => {
     "assign",
     "labels",
     "epic",
+    "type",
     "resolution",
   ])
+})
+
+test("changing the type is offered only where the source can write it", () => {
+  expect(ids({ canRetype: false })).not.toContain("issue:type")
+  expect(ids({ canRetype: true })).toContain("issue:type")
+})
+
+test("the type command names the selection, like the other field editors", () => {
+  const label = (ctx: Partial<CommandContext>) =>
+    buildCommands({ ...BASE, ...ctx }).find((c) => c.id === "issue:type")?.label
+  expect(label({})).toBe("Change type of SHOP-1…")
+  expect(label({ selectionCount: 3 })).toBe("Change type of 3 selected…")
 })
 
 test("the copy commands follow the multi-select", () => {

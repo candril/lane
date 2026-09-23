@@ -50,6 +50,7 @@ as a unified diff.
 | `a` | assign: me, unassigned, anyone on the board, or a typed name |
 | `#` | labels: toggle existing ones, type to add |
 | `⇧E` | set or detach the epic, from the epics on the board |
+| — | change the type — *Change type of SHOP-1…* in the palette (`^P`); no key of its own |
 | `⇧S` | set the status from the board's statuses |
 | `⇧R` | close as a reason — Jira's resolution — or change a closed issue's reason in hindsight |
 | `⇧H` / `⇧L` | move to the previous / next column — every marked issue, each from its own |
