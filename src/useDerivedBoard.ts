@@ -1,5 +1,6 @@
 import { useMemo } from "react"
 import { assigneeCandidates } from "./assign"
+import { epicChoices } from "./epics"
 import { applyFilter, parseQuery, suggestions, type SubtaskScope } from "./filter"
 import {
   backlogRows,
@@ -10,7 +11,7 @@ import {
   type Grouping,
   type LaneOptions,
 } from "./grouping"
-import { columnColor, epicColor } from "./utils/glyphs"
+import { columnColor } from "./utils/glyphs"
 import { theme } from "./theme"
 import type { LabelChoice } from "./labels"
 import type { PickItem } from "./components/Picker"
@@ -125,18 +126,10 @@ export function useDerivedBoard(args: {
     return [...counts].map(([value, count]) => ({ value, count }))
   }, [board])
 
-  // Epics referenced by the board's issues (key + name), for the change-epic picker
-  // (specs/038). Deduped by key; the picker prepends a "(no epic)" detach option. The
-  // loaded set is the candidate source for now — an epic-source query is a P2 follow-up.
-  const epicCandidates = useMemo<PickItem[]>(() => {
-    const byKey = new Map<string, string>()
-    for (const t of board.tasks) {
-      if (t.epicKey && !byKey.has(t.epicKey)) {
-        byKey.set(t.epicKey, t.epicName ?? t.epicKey)
-      }
-    }
-    return [...byKey].map(([value, label]) => ({ value, label, color: epicColor(value) }))
-  }, [board])
+  // The epics the change-epic picker offers (specs/038); it prepends "(no epic)" to
+  // detach. The board's own loaded issues are the source — an epic-source query is a
+  // P2 follow-up.
+  const epicCandidates = useMemo<PickItem[]>(() => epicChoices(board.tasks), [board.tasks])
 
   // Backlog columns join the map so a backlog row shows its status name, not the
   // raw column id (specs/044). They are muted: not being on the board is the point.

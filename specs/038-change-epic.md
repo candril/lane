@@ -24,6 +24,12 @@ epic-grouped views ([034](./034-epic-grouped-backlog.md)) and updates the card t
   **epic picker**: choose among known epics, or **"none"** to detach. Reuses the picker
   UX from [013](./013-quick-field-edit.md) / [027](./027-assign-issue-to-user.md), opening
   on the issue's present epic (marked `◉`, `(no epic)` when it has none).
+- **The candidates are every epic the board knows**: the epics among its own issues
+  ([034](./034-epic-grouped-backlog.md)), plus the ones its issues link to. An epic that
+  nothing links to yet — one just created ([019](./019-quick-create.md)) above all — is in
+  the list from the moment it exists, which is when you want to file work under it. An
+  epic's own summary is the label; the name a child reports is the fallback for a link to
+  an epic the board never loaded.
 - **Optimistic**: update the card's epic (tag + grouping placement) immediately, then
   reconcile; **revert** on failure with an error
   ([006](./006-card-movement.md) / [nfr/004](./nfr/004-reliability-and-errors.md)).
@@ -38,9 +44,9 @@ epic-grouped views ([034](./034-epic-grouped-backlog.md)) and updates the card t
 
 ### P2 — Should Have
 
-- **Epic candidate source — a query.** The loaded issues often reference few or no epics
-  (a board of loose stories; Checkout references none today), so suggesting epics from
-  the loaded set alone is thin or empty. A configurable **epic-source JQL** (per board /
+- **Epic candidate source — a query.** The board's own issues cover the epics it works
+  under, but not an epic that lives outside its query, so the list is still thin on a
+  board of loose stories. A configurable **epic-source JQL** (per board /
   instance — e.g. `issuetype = Epic AND statusCategory != Done AND <team>`) fetches the
   meaningful candidate epics — one cheap `search/jql` requesting `summary` so candidates
   show names. Merge with epics already referenced by loaded issues, rank with the fuzzy

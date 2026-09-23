@@ -30,6 +30,11 @@ All notable changes to lane are recorded here. The format follows
   one issue or a whole selection. Story, task and bug only — turning something into a sub-task or
   an epic is Jira's Move wizard, which its API doesn't offer.
 
+### Fixed
+
+- The epic picker (`⇧E`) offers every epic on the board, not only those some issue already
+  links to. An epic you just created was missing from it until something pointed at it.
+
 ## [0.3.0] — 2026-09-21
 
 ### Added
