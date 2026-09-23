@@ -1,6 +1,6 @@
 # Change Epic
 
-**Status**: Implemented (P1 picker + `setEpic` + optimistic/revert; P2 epic-source query & palette pending)
+**Status**: Implemented (P1 picker + `setEpic` + optimistic/revert + P2 epic-source query; P2 `epic:` completion from the same set pending)
 
 ## Description
 
@@ -44,9 +44,14 @@ epic-grouped views ([034](./034-epic-grouped-backlog.md)) and updates the card t
 
 ### P2 — Should Have
 
-- **Epic candidate source — a query.** The board's own issues cover the epics it works
-  under, but not an epic that lives outside its query, so the list is still thin on a
-  board of loose stories. A configurable **epic-source JQL** (per board /
+- ~~**Epic candidate source — a query.**~~ **Built**: `epic_jql` per board (falling back
+  to the instance's), fetched the first time the picker opens on that source and merged
+  after the board's own epics, which come first because its work already sits under them.
+  A board whose query excludes epics — `type != Epic`, the common shape — otherwise can
+  only offer epics something already links to, never one just created. The fetch is held
+  for the session per source: an epic list doesn't move often enough to pay for a round
+  trip on every `⇧E`. A failed fetch says so and opens the picker on what the board
+  loaded, since a slow network shouldn't take the editor away. It was: A configurable **epic-source JQL** (per board /
   instance — e.g. `issuetype = Epic AND statusCategory != Done AND <team>`) fetches the
   meaningful candidate epics — one cheap `search/jql` requesting `summary` so candidates
   show names. Merge with epics already referenced by loaded issues, rank with the fuzzy

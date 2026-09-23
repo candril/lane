@@ -39,6 +39,7 @@ project            = "SHOP"                # created issues go here; bare number
 story_points_field = "customfield_10016"  # the estimate field, shown as "5 pts"
 sprint_field       = "customfield_10020"  # the Sprint field; enables the `sprint` grouping (specs/050)
 # epic_link_field  = "customfield_10014"  # only on classic projects; the default is `parent`
+# epic_jql         = "type = Epic AND statusCategory != Done"  # default for every board
 default_resolution = "Done"               # what a close carries when you don't pick a reason (specs/053)
 
 # Statuses that are the backlog rather than a column (specs/044): kept off the board,
@@ -77,6 +78,9 @@ grouping = "parent"                       # none | parent | type | swimlanes | s
 jql  = "project = SHOP AND type != Epic AND sprint in openSprints()"
 # Where a `:` search starts while this tab is active; `^A` widens it to all of Jira.
 search_scope = "project = SHOP"
+# The epics `⇧E` offers. This board excludes epics (`type != Epic`), so without this it
+# could only offer the ones its issues already link to — never one just created.
+epic_jql = "project = SHOP AND type = Epic AND statusCategory != Done"
 
   # Stamped onto every issue created from this board, so a create screen with
   # required fields (team, component, …) doesn't reject the headless create.

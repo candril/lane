@@ -29,6 +29,10 @@ All notable changes to lane are recorded here. The format follows
 - Change the type an issue was filed as: *Change type of SHOP-1…* in the command palette, over
   one issue or a whole selection. Story, task and bug only — turning something into a sub-task or
   an epic is Jira's Move wizard, which its API doesn't offer.
+- `epic_jql` per board (or `jira.epic_jql` for all of them): the epics `⇧E` can file work
+  under. A board whose query excludes epics could only offer the ones its issues already
+  linked to, so an epic you had just created was unreachable. Fetched when the picker first
+  opens on that board.
 
 ### Fixed
 

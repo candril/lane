@@ -44,6 +44,8 @@ export interface BoardSource {
   query?: string
   /** JQL a global search starts inside while this board is active (specs/046). */
   searchScope?: string
+  /** JQL naming the epics this board can file work under (specs/038). */
+  epicJql?: string
   /** Project key, for resolving a bare issue number typed into the search (specs/046). */
   project?: string
   /**

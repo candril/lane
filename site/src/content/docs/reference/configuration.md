@@ -104,6 +104,7 @@ Instance-wide provider settings, shared by every board.
 | `sprint_field` | string | Custom field id carrying an issue's sprints, e.g. `customfield_10020`. Enables the `sprint` grouping and sprint-aware backlog. Unset on a kanban-only instance. |
 | `default_resolution` | string | The resolution a close carries when none is picked — what a plain `⇧L` into Done sends. Defaults to `Done`. |
 | `epic_link_field` | string | The field carrying an issue's epic link. Defaults to `parent` (Jira's unified hierarchy); set it to a custom field id on classic projects still using the old Epic Link. |
+| `epic_jql` | string | Default `epic_jql` for every board — the epics `⇧E` can file work under. |
 | `backlog_statuses` | array of strings | Statuses kept off every board — see [Backlog statuses](#backlog-statuses). |
 | `issue_types` | table | Issue-type name overrides — see [Issue type names](#issue-type-names). |
 
@@ -165,6 +166,7 @@ One entry per tab, in config order. At least one is required.
 | `sprint_board_id` | number | The Jira board whose sprints count, from the board's URL. Without it, sprints from every board an issue reports make a lane — and two boards routinely name theirs the same. |
 | `default_resolution` | string | Overrides `jira.default_resolution` for this board. |
 | `search_scope` | string | JQL a `:` search starts inside while this tab is active. `^A` drops it. |
+| `epic_jql` | string | JQL naming the epics `⇧E` can file work under. Needed when the board's own query excludes epics — otherwise it can only offer epics its issues already link to. Overrides `jira.epic_jql`. |
 | `project` | string | Overrides `jira.project` for this board. |
 | `columns` | array of tables | Overrides `jira.columns` for this board. |
 | `backlog_statuses` | array of strings | Overrides `jira.backlog_statuses` for this board. |

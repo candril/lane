@@ -134,6 +134,7 @@ function parseBoard(value: unknown, where: string): BoardConfig {
         : asStringArray(raw.backlog_statuses, `${where}.backlog_statuses`),
     project: optString(raw.project, `${where}.project`),
     searchScope: optString(raw.search_scope, `${where}.search_scope`),
+    epicJql: optString(raw.epic_jql, `${where}.epic_jql`),
     sprintBoardId: optNumber(raw.sprint_board_id, `${where}.sprint_board_id`),
     defaultResolution: optString(raw.default_resolution, `${where}.default_resolution`),
     columns: raw.columns === undefined ? undefined : parseColumns(raw.columns, `${where}.columns`),
@@ -223,6 +224,7 @@ function parseJira(value: unknown): JiraSettings {
     sprintField: optString(raw.sprint_field, "jira.sprint_field"),
     teamField: optString(raw.team_field, "jira.team_field"),
     epicLinkField: optString(raw.epic_link_field, "jira.epic_link_field"),
+    epicJql: optString(raw.epic_jql, "jira.epic_jql"),
     defaultResolution: optString(raw.default_resolution, "jira.default_resolution"),
     columns: parseColumns(raw.columns, "jira.columns"),
     backlogStatuses:

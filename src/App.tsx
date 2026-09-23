@@ -66,6 +66,7 @@ import { useBoardCursor } from "./useBoardCursor"
 import { useBoardData } from "./useBoardData"
 import { useCreateDraft, type CreateAnchor } from "./useCreateDraft"
 import { isPendingKey, withPendingGuard } from "./pendingCreate"
+import { epicChoices } from "./epics"
 import { useJump } from "./useJump"
 import { useDialogs } from "./useDialogs"
 import { usePalette } from "./usePalette"
@@ -131,6 +132,8 @@ const BASE_GROUPINGS: Grouping[] = ["none", "parent", "type"]
 
 /** Results per search, and how long a keystroke waits before becoming a query. */
 const SEARCH_LIMIT = 12
+/** Epics offered by a board's epic-source query (specs/038) — a team's, not an instance's. */
+const EPIC_CANDIDATE_LIMIT = 200
 const SEARCH_DEBOUNCE = 180
 
 // `g`+letter grouping selects (specs/009): `gn` none, `gp` parent, `gt` type, `gs`
@@ -346,6 +349,11 @@ export function App({
   // The instance's resolutions (specs/053), fetched on first use and kept for the
   // session — workflow configuration, not board data, so a refresh doesn't touch it.
   const [resolutions, setResolutions] = useState<string[]>([])
+  // Epics fetched from a board's epic-source query (specs/038), by source id: a board
+  // whose own query excludes epics has none of its own to offer. Fetched once per source
+  // and held for the session — the list is stable enough that a round trip on every ⇧E
+  // would cost more than it corrects.
+  const [sourceEpics, setSourceEpics] = useState<Record<string, Task[]>>({})
   const {
     editing,
     setEditing,
@@ -1391,11 +1399,31 @@ export function App({
     }
   }
 
+  /**
+   * The epics this board can file work under (specs/038): the ones it loaded, plus the
+   * ones its epic-source query finds. Fetched on first use — a board without that query,
+   * or a provider that can't search, simply offers what the board loaded.
+   */
+  async function withEpics(open: () => void) {
+    if (!source.epicJql || !provider.searchIssues || sourceEpics[source.id]) {
+      open()
+      return
+    }
+    try {
+      const epics = await provider.searchIssues(source.epicJql, EPIC_CANDIDATE_LIMIT)
+      setSourceEpics((held) => ({ ...held, [source.id]: epics }))
+    } catch (err) {
+      // What the board loaded is still worth offering, so the picker opens either way.
+      showToast(`epic list incomplete: ${err instanceof Error ? err.message : String(err)}`)
+    }
+    open()
+  }
+
   /** Open the change-epic picker for the focused issue or the selection (specs/038). */
   function startEpic() {
     const keys = editTargets()
     if (keys.length > 0) {
-      setEpicing({ keys })
+      void withEpics(() => setEpicing({ keys }))
     }
   }
 
@@ -1512,13 +1540,19 @@ export function App({
     () => RETYPABLE.map((type) => ({ value: type, label: type, color: typeGlyph(type).color })),
     [],
   )
+  // The board's own epics come first: they are the ones its work already sits under.
+  const fetchedEpicItems = useMemo<PickItem[]>(() => {
+    const loaded = new Set(epicCandidates.map((e) => e.value))
+    return epicChoices(sourceEpics[source.id] ?? []).filter((e) => !loaded.has(e.value))
+  }, [sourceEpics, source.id, epicCandidates])
+
   const resolutionItems = useMemo<PickItem[]>(
     () => resolutions.map((name) => ({ value: name, label: name })),
     [resolutions],
   )
   const epicItems = useMemo<PickItem[]>(
-    () => [{ value: null, label: "(no epic)" }, ...epicCandidates],
-    [epicCandidates],
+    () => [{ value: null, label: "(no epic)" }, ...epicCandidates, ...fetchedEpicItems],
+    [epicCandidates, fetchedEpicItems],
   )
 
   const palette = usePalette()
@@ -1715,10 +1749,14 @@ export function App({
       return
     }
     const enter = () => palette.descend(kind, keys, kind === "labels" ? commonLabels(keys) : [])
-    // The reasons are fetched, not derived from the board, so this descent waits on
-    // them where the others can open immediately.
+    // The reasons and the epic list are fetched, not derived from the board, so these
+    // descents wait on them where the others can open immediately.
     if (kind === "resolution") {
       void withResolutions(enter)
+      return
+    }
+    if (kind === "epic") {
+      void withEpics(enter)
       return
     }
     enter()

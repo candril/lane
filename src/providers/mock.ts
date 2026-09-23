@@ -1,5 +1,6 @@
 import type { Board, Task } from "../types"
 import type { BoardProvider, ChangeEntry, IssueDetail } from "./provider"
+import { matchesJql } from "../jql/match"
 
 /**
  * In-memory sample board, shaped like a Jira sprint: an epic, a handful of stories
@@ -305,6 +306,13 @@ export function createMockProvider(data: MockData = sampleData()): BoardProvider
   const board = seed()
   let created = 0
 
+  /**
+   * Everything this mock holds, decorated and detached — what a query sees. Taken from
+   * the live board, not a fresh seed, so an issue created this session is found the way
+   * a backend would find it.
+   */
+  const everything = () => decorate(structuredClone(board))
+
   // The epic's name lives on the epic issue, not its children — resolve it onto each
   // child's `epicName` so the card tag has a label offline (specs/029), mirroring what
   // the Jira provider reads from `parent.fields.summary`.
@@ -369,7 +377,7 @@ export function createMockProvider(data: MockData = sampleData()): BoardProvider
       const parents = /parent in \(([^)]*)\)/i.exec(jql)?.[1]
       if (parents && /subTaskIssueTypes/i.test(jql)) {
         const keys = new Set(parents.split(",").map((k) => k.trim().toUpperCase()))
-        return decorate(structuredClone(seed()))
+        return everything()
           .tasks.filter((t) => t.type === "subtask" && !!t.parentKey && keys.has(t.parentKey))
           .slice(0, limit)
       }
@@ -379,18 +387,30 @@ export function createMockProvider(data: MockData = sampleData()): BoardProvider
       const parent = /parent = "?([A-Z]+-\d+)"?/i.exec(jql)?.[1]
       if (parent) {
         const of = parent.toUpperCase()
-        return decorate(structuredClone(seed()))
+        return everything()
           .tasks.filter((t) => t.epicKey?.toUpperCase() === of || t.parentKey?.toUpperCase() === of)
           .slice(0, limit)
       }
+      const all = everything()
       const key = /key = ([A-Z]+-\d+)/i.exec(jql)?.[1]
+      // A plain field query — `type = epic`, what an epic-source query looks like
+      // (specs/038). The swimlane matcher already understands that subset; anything it
+      // can't parse falls through to the text match below.
+      if (!key && !/text ~/i.test(jql)) {
+        try {
+          return all.tasks
+            .filter((t) => matchesJql(t, jql, { columns: all.columns }))
+            .slice(0, limit)
+        } catch {
+          // Not a query this stand-in can evaluate — match it as text.
+        }
+      }
       // The wildcard the prompt appends to the word being typed (specs/046) is what a
       // substring match does anyway, so drop it.
       const text = (/text ~ "(.*)"/i.exec(jql)?.[1] ?? "").replace(/\*/g, "")
-      const board = decorate(structuredClone(seed()))
       const hits = key
-        ? board.tasks.filter((t) => t.key.toUpperCase() === key.toUpperCase())
-        : board.tasks.filter((t) =>
+        ? all.tasks.filter((t) => t.key.toUpperCase() === key.toUpperCase())
+        : all.tasks.filter((t) =>
             `${t.key} ${t.summary}`.toLowerCase().includes(text.toLowerCase()),
           )
       return hits.slice(0, limit)
@@ -413,11 +433,9 @@ export function createMockProvider(data: MockData = sampleData()): BoardProvider
       }
     },
 
-    /** From the whole seed, like `searchIssues` — the board a tab shows may be narrower. */
+    /** From the whole board, like `searchIssues` — the board a tab shows may be narrower. */
     async loadChildren(key): Promise<Task[]> {
-      return decorate(structuredClone(seed())).tasks.filter(
-        (t) => t.parentKey === key || t.epicKey === key,
-      )
+      return everything().tasks.filter((t) => t.parentKey === key || t.epicKey === key)
     },
 
     async moveTask(key, toColumnId, resolution) {

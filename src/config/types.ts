@@ -79,6 +79,13 @@ export interface BoardConfig {
    */
   searchScope?: string
   /**
+   * JQL naming the epics this board can file work under (specs/038) — its own query
+   * often excludes epics, or the epic lives outside it, and an epic nothing links to yet
+   * is then unreachable. Fetched once, when the epic picker first opens; omitted → the
+   * candidates are the epics the board itself loaded.
+   */
+  epicJql?: string
+  /**
    * The reason this board's closes carry by default (specs/053); overrides
    * {@link JiraSettings.defaultResolution}. Set it where one board's workflow names its
    * everyday close something other than the instance default.
@@ -120,6 +127,11 @@ export interface JiraSettings {
    * old Epic Link (specs/034).
    */
   epicLinkField?: string
+  /**
+   * Instance-wide default for {@link BoardConfig.epicJql} (specs/038) — the epics every
+   * board may file under, unless the board names its own.
+   */
+  epicJql?: string
   columns: ColumnConfig[]
   /** Instance-wide backlog statuses (specs/044); a board may override them. */
   backlogStatuses?: string[]

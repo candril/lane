@@ -150,6 +150,9 @@ function demoSources(): BoardSource[] {
       swimlanes: DEMO_SWIMLANES,
       defaultMode: "board",
       project: "SHOP",
+      // This board holds no epics, so the picker's candidates come from here
+      // (specs/038) — the same shape as a config board's `epic_jql`.
+      epicJql: "type = epic",
       hasBacklog: true,
     },
     {
@@ -226,6 +229,7 @@ async function startup(): Promise<Startup> {
           defaultMode: b.view,
           defaultGrouping: b.grouping,
           searchScope: b.searchScope,
+          epicJql: b.epicJql ?? cfg.jira.epicJql,
           project: jc.project,
           epicField: jc.epicLinkField,
           hasBacklog: (jc.backlogStatuses?.length ?? 0) > 0,
