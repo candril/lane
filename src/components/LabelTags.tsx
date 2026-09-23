@@ -1,4 +1,5 @@
 import { theme } from "../theme"
+import { useFaded } from "./Fade"
 import { labelColor } from "../utils/glyphs"
 
 /**
@@ -17,6 +18,7 @@ export function LabelTags({
   /** Cap the rendered width; a label longer than its column would wrap the row. */
   width?: number
 }) {
+  const faded = useFaded()
   if (!labels || labels.length === 0) {
     return null
   }
@@ -25,12 +27,12 @@ export function LabelTags({
   return (
     <text>
       {shown.map(({ label, text }, i) => (
-        <span key={label} fg={labelColor(label)}>
+        <span key={label} fg={faded(labelColor(label))}>
           {i > 0 ? " " : ""}
           {text}
         </span>
       ))}
-      {extra > 0 && <span fg={theme.textMuted}> +{extra}</span>}
+      {extra > 0 && <span fg={faded(theme.textMuted)}> +{extra}</span>}
     </text>
   )
 }

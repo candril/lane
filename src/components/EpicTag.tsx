@@ -1,4 +1,5 @@
 import { epicColor, typeGlyph } from "../utils/glyphs"
+import { useFaded } from "./Fade"
 
 /**
  * A card/row's epic link as a compact colour-coded tag (specs/029): the epic glyph
@@ -19,13 +20,14 @@ export function EpicTag({
   epicName?: string
   max?: number
 }) {
+  const faded = useFaded()
   if (!epicKey) {
     return null
   }
   const label = epicName ?? epicKey
   return (
     <text>
-      <span fg={epicColor(epicKey)}>
+      <span fg={faded(epicColor(epicKey))}>
         {typeGlyph("epic").char} {max && label.length > max ? `${label.slice(0, max - 1)}…` : label}
       </span>
     </text>

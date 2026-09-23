@@ -1,5 +1,6 @@
 import type { ReactNode } from "react"
 import { theme } from "../theme"
+import { useFaded } from "./Fade"
 
 interface BasketProps {
   /**
@@ -19,21 +20,22 @@ interface BasketProps {
  * characters (nfr/002).
  */
 export function Basket({ header, children }: BasketProps) {
+  const faded = useFaded()
   return (
     <box
       flexDirection="column"
       marginBottom={1}
       paddingX={1}
       paddingTop={1}
-      backgroundColor={theme.bg}
+      backgroundColor={faded(theme.bg)}
     >
       {header && (
         <box paddingBottom={1} flexDirection="row">
           <box flexShrink={0}>
-            <text fg={theme.textDim}>{header.key} </text>
+            <text fg={faded(theme.textDim)}>{header.key} </text>
           </box>
           <box flexGrow={1} flexShrink={1}>
-            <text fg={theme.textMuted}>{header.summary}</text>
+            <text fg={faded(theme.textMuted)}>{header.summary}</text>
           </box>
         </box>
       )}

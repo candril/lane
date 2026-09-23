@@ -1,5 +1,6 @@
 import { theme } from "../theme"
 import { avatarColor } from "../utils/glyphs"
+import { useFaded } from "./Fade"
 
 /** `paddingX` on both sides of two initials — the slot every avatar has to fill. */
 const CHIP_WIDTH = 4
@@ -20,14 +21,15 @@ function initials(name: string): string {
  * glyph is noise the blank already communicates.
  */
 export function Avatar({ name }: { name?: string }) {
+  const faded = useFaded()
   if (!name) {
     return <box width={CHIP_WIDTH} height={1} alignSelf="flex-start" />
   }
   return (
     // height + alignSelf pin the chip to one line: a box otherwise stretches to the
     // row height, so a wrapped multi-line title would inflate the chip vertically.
-    <box backgroundColor={avatarColor(name)} paddingX={1} height={1} alignSelf="flex-start">
-      <text fg={theme.bg}>{initials(name)}</text>
+    <box backgroundColor={faded(avatarColor(name))} paddingX={1} height={1} alignSelf="flex-start">
+      <text fg={faded(theme.bg)}>{initials(name)}</text>
     </box>
   )
 }

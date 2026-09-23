@@ -17,6 +17,12 @@ All notable changes to lane are recorded here. The format follows
   the first column, as they already did for a single issue. The block used to stop there.
 - `^P` opens the command palette in the issue viewer too. It used to walk the viewer's items
   there, which is what `j` / `k` and `^N` already do, and left `⇧P` as the only way in.
+- `s` narrows before it labels on a dense board. Up to 25 visible targets it labels them all,
+  as before. Past that every label needed two keys, which filled the glyph slot and ran into the
+  issue key — so it now opens a `jump ▸` prompt and gives each match a single-key label as you
+  type. A key that could extend what you typed is never a label. The board fades while you
+  narrow, each match stepping back out of the fade with what you typed picked out inside its key
+  or summary.
 
 ### Added
 
@@ -36,6 +42,8 @@ All notable changes to lane are recorded here. The format follows
 
 ### Fixed
 
+- A jump label typed at speed could be misread: each keystroke was matched against the state of
+  the previous render, so the second key of a two-key label went missing.
 - The epic picker (`⇧E`) offers every epic on the board, not only those some issue already
   links to. An epic you just created was missing from it until something pointed at it.
 

@@ -7,6 +7,7 @@ import type { Column as ColumnModel, Task } from "../types"
 import { Basket } from "./Basket"
 import { Card } from "./Card"
 import { ChecklistCard } from "./ChecklistCard"
+import { useFaded } from "./Fade"
 
 interface ColumnProps {
   column: ColumnModel
@@ -29,6 +30,8 @@ interface ColumnProps {
   layout: SubtaskLayout
   /** Jump labels by card key while a jump is active (specs/037). */
   jumpLabels?: Map<string, string>
+  jumpActive?: boolean
+  jumpQuery?: string
   /** Keys in the multi-select copy set (specs/055). */
   selectedKeys?: Set<string>
   /** Tall = flat board column (scrolls, fills height). Otherwise a swimlane band cell. */
@@ -50,10 +53,13 @@ export function Column({
   boardColumns,
   layout,
   jumpLabels,
+  jumpActive,
+  jumpQuery,
   selectedKeys,
   tall,
   collapsed,
 }: ColumnProps) {
+  const faded = useFaded()
   if (collapsed) {
     return (
       <box
@@ -65,10 +71,10 @@ export function Column({
         marginX={1}
         alignItems="center"
         paddingY={tall ? 1 : 0}
-        backgroundColor={focused ? theme.headerBg : theme.columnBg}
+        backgroundColor={faded(focused ? theme.headerBg : theme.columnBg)}
       >
         <text
-          fg={focused ? theme.primary : theme.textDim}
+          fg={faded(focused ? theme.primary : theme.textDim)}
           attributes={focused ? TextAttributes.BOLD : undefined}
         >
           ▸
@@ -80,14 +86,14 @@ export function Column({
             .toUpperCase()
             .split("")
             .map((ch, i) => (
-              <text key={i} fg={focused ? theme.primary : theme.textDim}>
+              <text key={i} fg={faded(focused ? theme.primary : theme.textDim)}>
                 {ch}
               </text>
             ))}
         {cards.length > 0 && (
           <>
             {tall && <text> </text>}
-            <text fg={theme.textMuted}>{cards.length}</text>
+            <text fg={faded(theme.textMuted)}>{cards.length}</text>
           </>
         )}
       </box>
@@ -113,6 +119,8 @@ export function Column({
         statusBadge={offColumn ? (meta?.title ?? card.task.columnId) : null}
         statusColor={meta?.color ?? theme.textDim}
         jumpLabel={jumpLabels?.get(card.task.key)}
+        jumpActive={jumpActive}
+        jumpQuery={jumpQuery}
         hidden={card.hidden}
       />
     )
@@ -190,6 +198,8 @@ export function Column({
             statusBadge={null}
             statusColor={theme.textDim}
             jumpLabel={jumpLabels?.get(parent.key)}
+            jumpActive={jumpActive}
+            jumpQuery={jumpQuery}
             hidden={g.card.hidden}
           />
         )
@@ -206,6 +216,8 @@ export function Column({
           doneColumnId={doneColumnId}
           columnMeta={columnMeta}
           jumpLabels={jumpLabels}
+          jumpActive={jumpActive}
+          jumpQuery={jumpQuery}
           selectedKeys={selectedKeys}
           hidden={g.card.hidden}
         />
@@ -219,7 +231,7 @@ export function Column({
       // keep it a quiet dash, just brightened when the cursor rests on it.
       <box ref={focused ? focusedRef : undefined} alignItems="center" paddingX={1}>
         <text
-          fg={focused ? theme.primary : theme.textMuted}
+          fg={faded(focused ? theme.primary : theme.textMuted)}
           attributes={focused ? TextAttributes.BOLD : undefined}
         >
           —
@@ -239,7 +251,7 @@ export function Column({
       flexGrow={1}
       flexBasis={0}
       marginX={1}
-      backgroundColor={theme.columnBg}
+      backgroundColor={faded(theme.columnBg)}
     >
       {/* paddingX 2 = the body's paddingX + the cards' own, so the title sits on
           the same column as the card glyphs — and as a lane header's name. */}
@@ -247,11 +259,11 @@ export function Column({
         paddingX={2}
         height={1}
         flexDirection="row"
-        backgroundColor={focused ? theme.headerBg : theme.columnBg}
+        backgroundColor={faded(focused ? theme.headerBg : theme.columnBg)}
       >
         <text>
-          <span fg={focused ? theme.primary : theme.textDim}>{column.title}</span>
-          {cards.length > 0 && <span fg={theme.textMuted}> {cards.length}</span>}
+          <span fg={faded(focused ? theme.primary : theme.textDim)}>{column.title}</span>
+          {cards.length > 0 && <span fg={faded(theme.textMuted)}> {cards.length}</span>}
         </text>
       </box>
 

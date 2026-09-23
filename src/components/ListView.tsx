@@ -1,4 +1,3 @@
-import { Fragment } from "react"
 import { useTerminalDimensions } from "@opentui/react"
 import { TextAttributes } from "@opentui/core"
 import { theme } from "../theme"
@@ -10,6 +9,8 @@ import { EpicTag } from "./EpicTag"
 import { JumpGlyph } from "./JumpTag"
 import { useTagVisibility } from "./TagVisibility"
 import { keyLabel } from "../pendingCreate"
+import { Fade, fade, useFading } from "./Fade"
+import { Matched } from "./Matched"
 
 interface ListViewProps {
   rows: ListRow[]
@@ -18,6 +19,9 @@ interface ListViewProps {
   columnMeta: Map<string, { title: string; color: string }>
   /** Jump labels by row task key while a jump is active (specs/037). */
   jumpLabels?: Map<string, string>
+  jumpActive?: boolean
+  /** What a narrowing jump has typed (specs/037). */
+  jumpQuery?: string
   /** Keys in the multi-select copy set (specs/055), shown as a tinted row background. */
   selectedKeys?: Set<string>
 }
@@ -93,11 +97,14 @@ export function ListView({
   doneColumnId,
   columnMeta,
   jumpLabels,
+  jumpActive,
+  jumpQuery,
   selectedKeys,
 }: ListViewProps) {
   // Dim rows while a jump is active so the labels overlay clearly (specs/037).
-  const dim = !!jumpLabels
+  const dim = !!jumpActive || (!!jumpLabels && !jumpQuery)
   const tags = useTagVisibility()
+  const fading = useFading()
   const { width } = useTerminalDimensions()
   return (
     <scrollbox flexGrow={1} paddingX={1} paddingY={1}>
@@ -108,8 +115,11 @@ export function ListView({
         const done = row.task.columnId === doneColumnId
         const focused = i === focusedIndex
         const selected = !!selectedKeys?.has(row.task.key)
+        // A narrowed jump's match keeps its colors inside the faded list (specs/037).
+        const matched = !!jumpQuery && !!jumpLabels?.get(row.task.key)
+        const faded = (color: string) => fade(color, fading && !matched)
         return (
-          <Fragment key={row.task.key}>
+          <Fade key={row.task.key} when={fading && !matched}>
             {row.section && (
               <box flexDirection="row" paddingX={1} marginTop={i > 0 ? 1 : 0}>
                 <text>
@@ -126,30 +136,39 @@ export function ListView({
               }
             >
               <text>
-                <span fg={theme.textDim}>{disclosure(row)}</span>
+                <span fg={faded(theme.textDim)}>{disclosure(row)}</span>
                 <JumpGlyph
                   label={jumpLabels?.get(row.task.key)}
                   char={type.char}
-                  color={type.color}
+                  color={faded(type.color)}
                 />
                 {/* Focus owns the row background; the key color says a focused row is
                     also in the copy set. */}
-                <span
-                  fg={
-                    dim || done ? theme.textMuted : focused && selected ? theme.warning : theme.text
-                  }
-                  attributes={done ? TextAttributes.STRIKETHROUGH : undefined}
-                >
-                  {keyLabel(row.task.key)}
+                <span attributes={done ? TextAttributes.STRIKETHROUGH : undefined}>
+                  <Matched
+                    text={keyLabel(row.task.key)}
+                    query={jumpQuery}
+                    fg={faded(
+                      dim || done
+                        ? theme.textMuted
+                        : focused && selected
+                          ? theme.warning
+                          : theme.text,
+                    )}
+                  />
                 </span>
-                <span fg={dim || done ? theme.textDim : theme.text}>
+                <span>
                   {" "}
-                  {summaryFor(
-                    row.task.summary,
-                    keyLabel(row.task.key),
-                    width - row.depth * 2,
-                    tags,
-                  )}
+                  <Matched
+                    text={summaryFor(
+                      row.task.summary,
+                      keyLabel(row.task.key),
+                      width - row.depth * 2,
+                      tags,
+                    )}
+                    query={jumpQuery}
+                    fg={faded(dim || done ? theme.textDim : theme.text)}
+                  />
                 </span>
               </text>
               <box flexGrow={1} />
@@ -173,7 +192,7 @@ export function ListView({
               <text fg={priority.color}>{priority.char} </text>
               <Avatar name={row.task.assignee} />
             </box>
-          </Fragment>
+          </Fade>
         )
       })}
     </scrollbox>

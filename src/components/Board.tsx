@@ -27,6 +27,9 @@ interface BoardProps {
   subtaskLayout?: SubtaskLayout
   /** Jump labels by card/lane key while a jump is active (specs/037). */
   jumpLabels?: Map<string, string>
+  /** A jump is up (specs/037) — everything behind its labels reads as backdrop. */
+  jumpActive?: boolean
+  jumpQuery?: string
   /** Keys in the multi-select copy set (specs/055). */
   selectedKeys?: Set<string>
 }
@@ -46,6 +49,8 @@ export function Board({
   columnMeta,
   subtaskLayout,
   jumpLabels,
+  jumpActive,
+  jumpQuery,
   selectedKeys,
 }: BoardProps) {
   const doneColumnId = board.columns[board.columns.length - 1]?.id ?? ""
@@ -75,6 +80,8 @@ export function Board({
               boardColumns={board.columns}
               layout={layout}
               jumpLabels={jumpLabels}
+              jumpActive={jumpActive}
+              jumpQuery={jumpQuery}
               selectedKeys={selectedKeys}
               tall
               collapsed={collapsedColumns.has(column.id)}
@@ -104,6 +111,8 @@ export function Board({
           columnMeta={columnMeta}
           layout={layout}
           jumpLabels={jumpLabels}
+          jumpActive={jumpActive}
+          jumpQuery={jumpQuery}
           selectedKeys={selectedKeys}
         />
       ))}

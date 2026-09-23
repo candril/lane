@@ -8,6 +8,8 @@ import { typeGlyph } from "../utils/glyphs"
 import { Avatar } from "./Avatar"
 import { Column } from "./Column"
 import { JumpGlyph } from "./JumpTag"
+import { Fade, fade, useFading } from "./Fade"
+import { Matched } from "./Matched"
 
 interface SwimlaneProps {
   lane: Lane
@@ -31,6 +33,8 @@ interface SwimlaneProps {
   layout: SubtaskLayout
   /** Jump labels by card/lane key while a jump is active (specs/037). */
   jumpLabels?: Map<string, string>
+  jumpActive?: boolean
+  jumpQuery?: string
   /** Keys in the multi-select copy set (specs/055). */
   selectedKeys?: Set<string>
 }
@@ -42,6 +46,8 @@ function LaneHeaderRow({
   headerRef,
   columnMeta,
   jumpLabel,
+  jumpActive,
+  jumpQuery,
 }: {
   header: LaneHeader
   collapsed: boolean
@@ -49,26 +55,35 @@ function LaneHeaderRow({
   headerRef?: Ref<BoxRenderable>
   columnMeta: Map<string, { title: string; color: string }>
   jumpLabel?: string
+  jumpActive?: boolean
+  jumpQuery?: string
 }) {
   const chevron = collapsed ? "▸" : "▾"
+  const outerFading = useFading()
   const background = selected ? theme.headerBg : undefined
   // During a jump the label overlays the chevron/glyph slot; dim the rest (specs/037).
-  const dim = !!jumpLabel
+  const dim = !!jumpActive || (!!jumpLabel && !jumpQuery)
 
+  const matched = !!jumpQuery && !!jumpLabel
+  const fading = outerFading && !matched
+  const faded = (color: string) => fade(color, fading)
   if (header.kind === "label") {
     return (
-      <box ref={headerRef} paddingX={1} flexDirection="row" backgroundColor={background}>
-        <text>
-          <JumpGlyph label={jumpLabel} char={chevron} color={theme.textDim} />
-          <span
-            fg={dim ? theme.textDim : selected ? theme.primary : theme.secondary}
-            attributes={TextAttributes.BOLD}
-          >
-            {header.text}
-          </span>
-          <span fg={theme.textMuted}> {header.count}</span>
-        </text>
-      </box>
+      <Fade when={fading}>
+        <box ref={headerRef} paddingX={1} flexDirection="row" backgroundColor={background}>
+          <text>
+            <JumpGlyph label={jumpLabel} char={chevron} color={faded(theme.textDim)} />
+            <span attributes={TextAttributes.BOLD}>
+              <Matched
+                text={header.text}
+                query={jumpQuery}
+                fg={faded(dim ? theme.textDim : selected ? theme.primary : theme.secondary)}
+              />
+            </span>
+            <span fg={faded(theme.textMuted)}> {header.count}</span>
+          </text>
+        </box>
+      </Fade>
     )
   }
 
@@ -76,26 +91,38 @@ function LaneHeaderRow({
   const type = typeGlyph(task.type)
   const status = columnMeta.get(task.columnId)
   return (
-    <box ref={headerRef} paddingX={1} flexDirection="row" backgroundColor={background}>
-      <text>
-        <span fg={theme.textDim}>{chevron} </span>
-        <JumpGlyph label={jumpLabel} char={type.char} color={type.color} />
-        <span fg={dim ? theme.textDim : selected ? theme.text : theme.textDim}>{task.key} </span>
-        <span fg={dim ? theme.textDim : theme.text} attributes={TextAttributes.BOLD}>
-          {task.summary}
-        </span>
-        <span fg={theme.textMuted}>
-          {" "}
-          ({subtaskCount} subtask{subtaskCount === 1 ? "" : "s"})
-        </span>
-        <span fg={status?.color ?? theme.textDim}>
-          {" "}
-          {(status?.title ?? task.columnId).toUpperCase()}
-        </span>
-      </text>
-      <box flexGrow={1} />
-      <Avatar name={task.assignee} />
-    </box>
+    <Fade when={fading}>
+      <box ref={headerRef} paddingX={1} flexDirection="row" backgroundColor={background}>
+        <text>
+          <span fg={faded(theme.textDim)}>{chevron} </span>
+          <JumpGlyph label={jumpLabel} char={type.char} color={faded(type.color)} />
+          <span>
+            <Matched
+              text={task.key}
+              query={jumpQuery}
+              fg={faded(dim ? theme.textDim : selected ? theme.text : theme.textDim)}
+            />{" "}
+          </span>
+          <span attributes={TextAttributes.BOLD}>
+            <Matched
+              text={task.summary}
+              query={jumpQuery}
+              fg={faded(dim ? theme.textDim : theme.text)}
+            />
+          </span>
+          <span fg={faded(theme.textMuted)}>
+            {" "}
+            ({subtaskCount} subtask{subtaskCount === 1 ? "" : "s"})
+          </span>
+          <span fg={faded(status?.color ?? theme.textDim)}>
+            {" "}
+            {(status?.title ?? task.columnId).toUpperCase()}
+          </span>
+        </text>
+        <box flexGrow={1} />
+        <Avatar name={task.assignee} />
+      </box>
+    </Fade>
   )
 }
 
@@ -115,6 +142,8 @@ export function Swimlane({
   columnMeta,
   layout,
   jumpLabels,
+  jumpActive,
+  jumpQuery,
   selectedKeys,
 }: SwimlaneProps) {
   return (
@@ -127,6 +156,8 @@ export function Swimlane({
           headerRef={headerSelected ? focusedRef : undefined}
           columnMeta={columnMeta}
           jumpLabel={jumpLabels?.get(lane.key)}
+          jumpActive={jumpActive}
+          jumpQuery={jumpQuery}
         />
       )}
       {!collapsed && (
@@ -146,6 +177,8 @@ export function Swimlane({
                 boardColumns={columns}
                 layout={layout}
                 jumpLabels={jumpLabels}
+                jumpActive={jumpActive}
+                jumpQuery={jumpQuery}
                 selectedKeys={selectedKeys}
                 tall={false}
                 collapsed={collapsedColumns.has(column.id)}

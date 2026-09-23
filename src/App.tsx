@@ -24,6 +24,8 @@ import { Board } from "./components/Board"
 import { ListView } from "./components/ListView"
 import { CreateNotice } from "./components/CreateNotice"
 import { CreatePrompt } from "./components/CreatePrompt"
+import { JumpPrompt } from "./components/JumpPrompt"
+import { Fade } from "./components/Fade"
 import { EditPrompt } from "./components/EditPrompt"
 import { Picker } from "./components/Picker"
 import { LabelEditor } from "./components/LabelEditor"
@@ -1327,7 +1329,7 @@ export function App({
     beginCreate(topLevel)
   }
 
-  const { jump, startJump, handleJumpKey } = useJump({
+  const { jump, jumpSearch, startJump, handleJumpKey } = useJump({
     view,
     lanes,
     rows,
@@ -2435,58 +2437,66 @@ export function App({
         }
         toast={toast}
       />
-      <TagVisibilityProvider value={tagVisibility}>
-        {detail && detailTask ? (
-          <IssueDetail
-            ref={detailScroll}
-            task={detailTask}
-            detail={detail}
-            status={columnMeta.get(detailTask.columnId)?.title ?? detailTask.status ?? "—"}
-            statusColor={columnMeta.get(detailTask.columnId)?.color ?? theme.textDim}
-            statusGlyph={statusGlyph(detailTask.columnId, board.columns)}
-            done={detailTask.columnId === doneColumnId}
-            links={detailLinks}
-            focusIndex={detailIndex}
-            jumpLabels={jump?.labels}
-            childCount={detailChildCount}
-            childrenFolded={detailChildrenFolded}
-            hiddenChildren={detailHiddenChildren}
-            selectedKeys={selection}
-            history={detailHistory}
-            historyCount={detailHistoryCount}
-            historyFolded={detailHistoryFolded}
-            sections={detailSections}
-            diff={detailDiff}
-          />
-        ) : view !== "board" ? (
-          <ListView
-            rows={rows}
-            focusedIndex={listFocus}
-            doneColumnId={doneColumnId}
-            columnMeta={columnMeta}
-            jumpLabels={jump?.labels}
-            selectedKeys={selection}
-          />
-        ) : (
-          <Board
-            board={filteredBoard}
-            grouping={grouping}
-            lanes={lanes}
-            activeLane={cursor.lane}
-            activeColumn={cursor.column}
-            onHeader={cursor.onHeader}
-            collapsed={collapsed}
-            collapsedColumns={collapsedColumns}
-            focusedKey={focusedKey}
-            focusedRef={focusedRef}
-            laneRef={activeLaneRef}
-            columnMeta={columnMeta}
-            subtaskLayout={subtasks}
-            jumpLabels={jump?.labels}
-            selectedKeys={selection}
-          />
-        )}
-      </TagVisibilityProvider>
+      {/* A narrowing jump fades the whole screen, and each match steps back out of it
+          (specs/037) — so what is left to read is the matches and their labels. */}
+      <Fade when={!!jumpSearch}>
+        <TagVisibilityProvider value={tagVisibility}>
+          {detail && detailTask ? (
+            <IssueDetail
+              ref={detailScroll}
+              task={detailTask}
+              detail={detail}
+              status={columnMeta.get(detailTask.columnId)?.title ?? detailTask.status ?? "—"}
+              statusColor={columnMeta.get(detailTask.columnId)?.color ?? theme.textDim}
+              statusGlyph={statusGlyph(detailTask.columnId, board.columns)}
+              done={detailTask.columnId === doneColumnId}
+              links={detailLinks}
+              focusIndex={detailIndex}
+              jumpLabels={jump?.labels}
+              childCount={detailChildCount}
+              childrenFolded={detailChildrenFolded}
+              hiddenChildren={detailHiddenChildren}
+              selectedKeys={selection}
+              history={detailHistory}
+              historyCount={detailHistoryCount}
+              historyFolded={detailHistoryFolded}
+              sections={detailSections}
+              diff={detailDiff}
+            />
+          ) : view !== "board" ? (
+            <ListView
+              rows={rows}
+              focusedIndex={listFocus}
+              doneColumnId={doneColumnId}
+              columnMeta={columnMeta}
+              jumpLabels={jump?.labels}
+              jumpActive={!!jump && !jumpSearch}
+              jumpQuery={jumpSearch?.query}
+              selectedKeys={selection}
+            />
+          ) : (
+            <Board
+              board={filteredBoard}
+              grouping={grouping}
+              lanes={lanes}
+              activeLane={cursor.lane}
+              activeColumn={cursor.column}
+              onHeader={cursor.onHeader}
+              collapsed={collapsed}
+              collapsedColumns={collapsedColumns}
+              focusedKey={focusedKey}
+              focusedRef={focusedRef}
+              laneRef={activeLaneRef}
+              columnMeta={columnMeta}
+              subtaskLayout={subtasks}
+              jumpLabels={jump?.labels}
+              jumpActive={!!jump && !jumpSearch}
+              jumpQuery={jumpSearch?.query}
+              selectedKeys={selection}
+            />
+          )}
+        </TagVisibilityProvider>
+      </Fade>
       {/* ↵ belongs to the viewer's own links while it is up (specs/057), so the notice
           doesn't offer it there. */}
       {createNotice && <CreateNotice notice={createNotice} canOpen={!detail} />}
@@ -2503,6 +2513,7 @@ export function App({
           onSubmit={submitCreate}
         />
       )}
+      {jumpSearch && <JumpPrompt query={jumpSearch.query} matches={jumpSearch.matches} />}
       {search && (
         <SearchPrompt
           state={search}

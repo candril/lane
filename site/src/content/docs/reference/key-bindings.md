@@ -17,7 +17,7 @@ Press `?` at any time for this list in the app. `esc`, `?` or `q` closes it.
 | `h` `j` `k` `l` | move the cursor |
 | `gg` / `⇧G` | jump to top / bottom (in the viewer: first / last item) |
 | `^D` / `^U` | half a screen of stops down / up |
-| `s` | jump to a card or lane — labels appear, type one; in the viewer: to a link |
+| `s` | jump to a card or lane — labels appear, type one; on a dense board, type to narrow first; in the viewer: to a link |
 | `⇧H` `⇧L` | move the card — or every marked one — to the previous / next column (a status transition) |
 | `⇧J` `⇧K` | reorder (rank) — the marked block moves as one; crosses the backlog divider |
 | `h` `l` / `↵` | on a lane header or a viewer section: fold / unfold |
@@ -95,7 +95,14 @@ issue.
 | `^T` | …keep the results as a tab |
 | `^O` | …open the result in the browser |
 | `^Y` / `^U` | …copy the result's key / URL |
-| `s` | jump to a card or lane that's already visible |
+| `s` | jump to a card or lane that's already visible — narrowing by text when there are many |
+
+`s` labels what you can point at. Up to 25 targets it labels them all and one keystroke lands.
+Past that it opens a `jump ▸` prompt: type a word from a card's key or summary, and each
+remaining match keeps a single-key label. The board fades while you type, and every match steps
+back out of the fade with the typed text picked out inside it. A key that could extend what you
+typed is never used as a label, so every keystroke either narrows or lands. Backspace takes a
+character back, `esc` cancels.
 
 `/` and `:` speak the same grammar — see [Filtering & Search](/lane/reference/filtering/).
 
