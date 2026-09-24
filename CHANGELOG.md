@@ -6,6 +6,8 @@ All notable changes to lane are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-09-24
+
 ### Changed
 
 - A new issue appears the moment you press Enter instead of after Jira answers, which took one to
@@ -154,7 +156,8 @@ First public release.
 - Command palette (`^P`) with every action, and a shortcut dialog (`?`).
 - `lane --mock` opens an offline demo board.
 
-[Unreleased]: https://github.com/candril/lane/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/candril/lane/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/candril/lane/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/candril/lane/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/candril/lane/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/candril/lane/compare/v0.1.0...v0.1.1
