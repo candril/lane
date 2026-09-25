@@ -6,6 +6,10 @@ All notable changes to lane are recorded here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- OpenTUI 0.5.12, `marked` 18.0.14, oxlint 1.85, oxfmt 0.70 and `undici-types` 8.11.2.
+
 ## [0.4.0] — 2026-09-24
 
 ### Changed
