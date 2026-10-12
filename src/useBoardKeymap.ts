@@ -182,6 +182,8 @@ export interface BoardKeymapContext {
   toggleExpand: () => void
   setRowExpanded: (open: boolean) => void
   moveFocusedCard: (direction: -1 | 1) => void
+  /** ⇧H/⇧L in the viewer: step the selected issue's status, on the board or off it. */
+  stepDetailStatus: (direction: -1 | 1) => void
   rankFocusedCard: (direction: -1 | 1) => void
   moveCursorColumn: (direction: -1 | 1) => void
   moveCursorRow: (direction: -1 | 1) => void
@@ -599,6 +601,17 @@ export function useBoardKeymap(ctx: BoardKeymapContext) {
       // dead end; on the issue itself there is nothing to follow, so it closes.
       if (name === "return" || name === "enter") {
         ctx.openDetailItem()
+        return
+      }
+      // ⇧H/⇧L step the selection's status as on the board — checked ahead of the
+      // fold keys, which would otherwise take the shifted letter as a plain h/l.
+      if (shift && (name === "h" || name === "l" || name === "left" || name === "right")) {
+        const dir = name === "h" || name === "left" ? -1 : 1
+        if (ctx.selectionCount > 0) {
+          ctx.stepMarked(dir)
+        } else {
+          ctx.stepDetailStatus(dir)
+        }
         return
       }
       // l/h open and close the section under the cursor — the list view's tree

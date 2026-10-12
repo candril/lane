@@ -348,6 +348,7 @@ export function createJiraProvider(config: JiraConfig): BoardProvider {
     // Only a sub-task's `parent` is a lane link. A story's `parent` is its epic
     // (a different hierarchy level) and must not make it nest as a sub-task.
     const laneParent = type === "subtask" ? fields.parent?.key : undefined
+    const mappedColumn = statusToColumn.get((fields.status?.name ?? "").toLowerCase())
     return {
       key: raw.key,
       summary: fields.summary ?? "",
@@ -355,8 +356,9 @@ export function createJiraProvider(config: JiraConfig): BoardProvider {
       priority: mapPriority(fields.priority?.name),
       assignee: assignee ? assignee : undefined,
       assigneeId: assignee ? fields.assignee?.accountId : undefined,
-      columnId: statusToColumn.get((fields.status?.name ?? "").toLowerCase()) ?? fallbackColumn,
+      columnId: mappedColumn ?? fallbackColumn,
       status: fields.status?.name,
+      unmappedStatus: mappedColumn ? undefined : true,
       resolution: fields.resolution?.name,
       parentKey: laneParent,
       epicKey: epicKeyOf(raw, type),

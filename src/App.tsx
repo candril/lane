@@ -541,6 +541,7 @@ export function App({
     load: loadDetail,
     patch: patchDetail,
     refresh: refreshDetail,
+    refreshChild: refreshDetailChild,
   } = useIssueDetail(provider)
   // The viewer's children section folded away (`z a`, specs/057) — per issue, like
   // the history: every issue opens with its children in view, unless the tab is set to
@@ -1166,6 +1167,7 @@ export function App({
   const {
     moveTo,
     setStatusByName,
+    stepOffBoard,
     submitResolution,
     transition,
     applyRank,
@@ -1216,6 +1218,32 @@ export function App({
       const loc = locate(buildLanes(next, grouping, laneOptions), focusedKey)
       if (loc) {
         setCursor({ ...loc, onHeader: false })
+      }
+    })
+  }
+
+  /**
+   * ⇧H/⇧L in the viewer (specs/057): step the selected issue's status. A heading or a
+   * history row selects no issue, and falling back to the one on screen there would
+   * move the parent while the cursor sits among its children — so nothing steps.
+   */
+  function stepDetailStatus(direction: -1 | 1) {
+    if ((detailIndex !== 0 && !detailSelected) || !currentKey) {
+      return
+    }
+    if (board.tasks.some((t) => t.key === currentKey)) {
+      void transition(currentKey, direction)
+      return
+    }
+    const task = taskFor(currentKey)
+    if (!task) {
+      return
+    }
+    const key = currentKey
+    void stepOffBoard(task, direction).then((moved) => {
+      // The issue on screen is re-read by `settleWrite`; a fetched child is not.
+      if (moved && key !== detail?.key) {
+        refreshDetailChild(key)
       }
     })
   }
@@ -2415,6 +2443,7 @@ export function App({
     toggleExpand,
     setRowExpanded,
     moveFocusedCard,
+    stepDetailStatus,
     rankFocusedCard,
     moveCursorColumn,
     moveCursorRow,

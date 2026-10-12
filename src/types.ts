@@ -54,6 +54,11 @@ export interface Task {
    */
   status?: string
   /**
+   * The status matches none of this board's columns, so `columnId` is the fallback
+   * column rather than where the issue stands — a step from it would start nowhere real.
+   */
+  unmappedStatus?: boolean
+  /**
    * The issue's resolution — *why* it ended, not just that it did (specs/053). Jira
    * requires one on the transitions into Done, so a closed card always carries it;
    * absent on anything still open.

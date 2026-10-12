@@ -80,6 +80,15 @@ triaging what hangs off it stop being separate activities.
 - **`⇧J`/`⇧K` rank the selected child** against its siblings, mirroring the row views
   ([006](./006-card-movement.md)); the cursor follows the moved child. Marked children move
   as one block, on the same rule the board and the list views use ([056](./056-bulk-edit.md)).
+- **`⇧H`/`⇧L` step the selection's status** one column, as on the board
+  ([006](./006-card-movement.md)) — the issue on screen at the first stop, a link
+  below it otherwise, the marks when there are any ([056](./056-bulk-edit.md)). They
+  take precedence over `h`/`l`'s fold, which only the unshifted letter means. On a
+  section heading they do nothing: the cursor is among the children, and stepping the
+  issue on screen from there would move the one thing it isn't on. An issue the board
+  doesn't hold steps through the provider's column-to-status mapping, the one a card
+  move uses, and is re-read once the write lands. If its status maps to no column on
+  this board there is no "next" to step to, so it says so and points at `⇧S`.
 - **`/` narrows the children** ([020](./020-filter-and-search.md)) with a filter of
   the viewer's own, in the board's filter language (`front`, `#UX`, `@me`,
   `-type:subtask`…), run over the family alone — children the board never loaded are
@@ -124,11 +133,10 @@ triaging what hangs off it stop being separate activities.
   re-reading the issue rather than by an optimistic update — board state has nothing to
   update for it, and the re-read brings the changelog with it. `⇧S` transitions it *by
   name* ([047](./047-query-backed-tabs.md)), since it has no card to move and this
-  board's column ids mean nothing outside its query. Known limit: `⇧H`/`⇧L` and the bulk
-  writes still act on board state alone, so they pass an off-board issue over — and the
+  board's column ids mean nothing outside its query. Known limit: the bulk writes still
+  act on board state alone, so they pass an off-board issue over — and the
   epic and status candidates are this board's, so a result from another project is
   offered links its workflow may refuse. The toast reports what the write returned.
-- **`⇧H`/`⇧L` on a selected child** to step its status without opening the picker.
 
 ## Out of Scope
 
@@ -157,6 +165,7 @@ triaging what hangs off it stop being separate activities.
 | `esc` | drop a visual range → clear the filter → close |
 | `q` | close outright, at any depth |
 | `⇧J` `⇧K` | rank the selected child among its siblings |
+| `⇧H` `⇧L` | step the selected issue's status one column (the marks, if any) |
 | `j` `k` onto a heading | the `subtasks`/`stories` and `history` headings are stops of their own, so a folded section can be reached |
 | `l` `h` | open / close the section under the cursor — the list's tree disclosure; `h` from inside a section lands on its heading (↵ on a heading toggles) |
 | `z a` `z o` `z c` | the same, on the section the cursor is in (the children by default) — [042](./042-fold-subtasks.md)'s chord; the heading keeps the count, folded rows leave the path. Every issue opens with its children in view: the fold is per issue, not a sticky layout preference |

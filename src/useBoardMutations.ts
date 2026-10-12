@@ -208,6 +208,34 @@ export function useBoardMutations(args: {
   }
 
   /**
+   * ⇧H/⇧L on an issue this board does not hold (specs/057): step it one column through
+   * the provider, which maps the column to a status the same way a card move does. No
+   * card to update optimistically, so resolves `true` once the write lands and leaves
+   * the re-read to the caller.
+   */
+  async function stepOffBoard(task: Task, direction: -1 | 1): Promise<boolean> {
+    if (task.unmappedStatus) {
+      showToast(`${task.key}: "${task.status ?? "?"}" has no column on this board — use ⇧S`)
+      return false
+    }
+    const target = nextStatus(board, task.columnId, direction)
+    if (!target) {
+      return false
+    }
+    pendingMutations.current++
+    try {
+      await provider.moveTask(task.key, target.id)
+      showToast(`${task.key} → ${target.title}`)
+      return true
+    } catch (err) {
+      showToast(`${task.key} not moved: ${err instanceof Error ? err.message : String(err)}`)
+      return false
+    } finally {
+      settleMutation()
+    }
+  }
+
+  /**
    * Set the status of an issue this board does not hold (specs/057) — one opened from
    * search, or a child outside the board's query. It has no card to move and the
    * board's column ids mean nothing for it, so it transitions *by name*, the way a
@@ -745,6 +773,7 @@ export function useBoardMutations(args: {
   return {
     moveTo,
     setStatusByName,
+    stepOffBoard,
     submitResolution,
     transition,
     applyRank,

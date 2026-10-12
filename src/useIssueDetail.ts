@@ -107,6 +107,33 @@ export function useIssueDetail(provider: BoardProvider) {
     [provider, load],
   )
 
+  /**
+   * Re-read a fetched child after a write against it (specs/057). The board holds no
+   * copy to update, so without this the children section keeps the row as it was
+   * fetched. No `run` ticket: that guards the issue on screen, and bumping it here
+   * would drop a refresh of that issue still in flight.
+   */
+  const refreshChild = useCallback(
+    (key: string) => {
+      if (!provider.loadIssue) {
+        return
+      }
+      cache.current.delete(key)
+      void (async () => {
+        const loaded = await load(key).catch(() => null)
+        if (!loaded) {
+          return
+        }
+        const swap = (tasks: Task[]) => tasks.map((t) => (t.key === key ? loaded.task : t))
+        for (const [parent, tasks] of childrenCache.current) {
+          childrenCache.current.set(parent, swap(tasks))
+        }
+        setChildren((c) => (c ? { ...c, tasks: swap(c.tasks) } : c))
+      })()
+    },
+    [provider, load],
+  )
+
   /** Record a description written elsewhere, so reopening shows the new text. */
   const patch = useCallback((key: string, description: string) => {
     const hit = cache.current.get(key)
@@ -258,6 +285,7 @@ export function useIssueDetail(provider: BoardProvider) {
     toggle,
     load,
     patch,
+    refreshChild,
     refresh,
   }
 }
