@@ -35,6 +35,7 @@ view = "board"
   [[boards.swimlanes]]
   name = "Critical"
   jql = "priority = Highest"
+  collapsed = true
 
   [[boards.swimlanes]]
   name = "Everything else"
@@ -54,7 +55,7 @@ test("parses a full valid config", () => {
   expect(board.createDefaults?.components).toEqual(["Checkout Platform"])
   expect(board.createDefaults?.custom?.team).toBe("c3db8dfc-57")
   expect(board.swimlanes).toEqual([
-    { name: "Critical", jql: "priority = Highest" },
+    { name: "Critical", jql: "priority = Highest", collapsed: true },
     { name: "Everything else", jql: "" }, // catch-all lane allows an empty jql
   ])
 })
@@ -75,6 +76,16 @@ test("view and optional tables may be omitted", () => {
   expect(cfg.boards[0]!.view).toBeUndefined()
   expect(cfg.boards[0]!.swimlanes).toBeUndefined()
   expect(cfg.display).toBeUndefined()
+})
+
+test("a non-boolean swimlane collapsed fails clearly", () => {
+  const bad = `${MINIMAL}
+  [[boards.swimlanes]]
+  name = "L"
+  jql = ""
+  collapsed = "yes"
+`
+  expect(() => validateConfig(parse(bad), "test")).toThrow(/swimlanes\[0\]\.collapsed/)
 })
 
 test("issue-type name overrides parse, board over instance (specs/012)", () => {

@@ -107,6 +107,7 @@ function parseSwimlanes(value: unknown, where: string): SwimlaneConfig[] | undef
       // A catch-all lane may use an empty jql, so don't require non-empty here.
       jql:
         typeof lane.jql === "string" ? lane.jql : fail(`${where}[${i}].jql`, "expected a string"),
+      collapsed: optBool(lane.collapsed, `${where}[${i}].collapsed`),
     }
   })
 }

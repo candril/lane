@@ -46,6 +46,17 @@ export function useBoardCursor(args: {
   // Default grouping is "parent", so the first lane has a header — land on it.
   const [cursor, setCursor] = useState<Cursor>({ lane: 0, column: 0, row: 0, onHeader: true })
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set())
+  // A lane configured `collapsed` folds once, when it first shows up — later renders
+  // leave it alone, or opening it would snap shut on the next board refresh.
+  const seededFolds = useRef(new Set<string>())
+  useEffect(() => {
+    const fresh = lanes.filter((l) => l.startsCollapsed && !seededFolds.current.has(l.key))
+    if (fresh.length === 0) {
+      return
+    }
+    fresh.forEach((l) => seededFolds.current.add(l.key))
+    setCollapsed((prev) => new Set([...prev, ...fresh.map((l) => l.key)]))
+  }, [lanes])
   // Columns folded to a narrow strip (specs/040), keyed by column id. Orthogonal to the
   // lane `collapsed` set above: this is the horizontal axis, that one the vertical.
   const [collapsedColumns, setCollapsedColumns] = useState<Set<string>>(new Set())

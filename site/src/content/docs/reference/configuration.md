@@ -223,7 +223,8 @@ jql = "labels in (UX, PO)"
 ```
 
 Matched locally against the loaded issues, in order. Give the last lane a catch-all `jql` (an
-empty string is allowed) if you want everything to land somewhere. `lane import` cannot scaffold
+empty string is allowed) if you want everything to land somewhere. `collapsed = true` starts a
+lane folded — for one holding standing items rather than the work; it opens like any other. `lane import` cannot scaffold
 these — Jira's public Agile API doesn't expose a board's swimlane definitions.
 
 ## `[display]`

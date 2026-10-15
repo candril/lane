@@ -12,6 +12,9 @@
   / `assignee` / `type` / `status` with `= != ~ IN "NOT IN" "IS [NOT] EMPTY"` and
   AND/OR/NOT; unsupported predicates no-match rather than throw. Chose client-side
   over per-lane queries to avoid N round-trips and the 100-cap per query.
+- A swimlane with `collapsed = true` starts folded. The fold is seeded once per lane,
+  the first time it appears, and is the user's from then on — a refresh that rebuilt
+  the lanes would otherwise shut a lane they had opened.
 - Multi-board **tabs** and switching (P1) are built: the header renders a tab per
   board (active highlighted); `1`–`9` jump directly and `[`/`]` cycle. Each board
   carries its own provider; a board loads lazily on first activation and caches its

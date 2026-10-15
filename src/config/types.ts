@@ -41,6 +41,8 @@ export interface CreateDefaults {
 export interface SwimlaneConfig {
   name: string
   jql: string
+  /** Start the lane folded — one that holds standing items rather than the work. */
+  collapsed?: boolean
 }
 
 export interface BoardConfig {

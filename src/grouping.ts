@@ -64,6 +64,8 @@ export interface Lane {
   key: string
   header: LaneHeader | null
   columns: BoardCard[][]
+  /** Fold the lane the first time it appears; after that the fold is the user's. */
+  startsCollapsed?: boolean
 }
 
 /**
@@ -351,6 +353,7 @@ export function buildLanes(board: Board, grouping: Grouping, options: LaneOption
         key: `lane:${lane.name}`,
         header: { kind: "label", text: lane.name, count: laneRoots.length },
         columns: flatColumns(laneTasks, columns, layout, folded, visibility),
+        startsCollapsed: lane.collapsed,
       }
     })
   }
