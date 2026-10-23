@@ -163,7 +163,7 @@ One entry per tab, in config order. At least one is required.
 | `jql` | string, **required** | The JQL defining the board's issues. |
 | `view` | `board` \| `list` \| `backlog` | The view this tab opens in. |
 | `grouping` | `none` \| `parent` \| `type` \| `swimlanes` \| `sprint` | The grouping it opens in. |
-| `sprint_board_id` | number | The Jira board whose sprints count, from the board's URL. Without it, sprints from every board an issue reports make a lane — and two boards routinely name theirs the same. |
+| `sprint_board_id` | number | The Jira board whose sprints count, from the board's URL: the ones its backlog shows, whichever board created them. Without it, sprints from every board an issue reports make a lane — and two boards routinely name theirs the same. |
 | `default_resolution` | string | Overrides `jira.default_resolution` for this board. |
 | `search_scope` | string | JQL a `:` search starts inside while this tab is active. `^A` drops it. |
 | `epic_jql` | string | JQL naming the epics `⇧E` can file work under. Needed when the board's own query excludes epics — otherwise it can only offer epics its issues already link to. Overrides `jira.epic_jql`. |

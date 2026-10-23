@@ -49,10 +49,13 @@ sprint simply never offers the grouping.
 
 ### P2 — Should Have
 
-- Per-board `sprint_board_id`: keep only sprints belonging to that Jira board. Real
+- Per-board `sprint_board_id`: keep only the sprints that Jira board shows. Real
   need, not hypothetical — WEB/APP issues sit in sprints from **two** boards, and
   both name theirs `Sprint 193`, so without it the board grows two identically-titled
-  lanes. The sprint field carries `boardId`, so this is a filter, not a second request.
+  lanes. The sprint field's `boardId` can't decide this: it is the board that *created*
+  the sprint, and a board's filter routinely shows sprints another board created and
+  runs. So the board's own sprint list (`/rest/agile/1.0/board/{id}/sprint`) is fetched
+  alongside the issues on every load, and an issue's sprints are matched against it by id.
 - `sprint` in the swimlane/filter grammar, so `sprint in openSprints()` stops evaluating
   to no-match in [`jql/match.ts`](../src/jql/match.ts) and a hand-written lane can name
   a sprint.
@@ -108,8 +111,12 @@ issue sprints with the same name.
 
 - **P1 and P2 both shipped.** `sprint_board_id` could not wait for a second pass: without
   it board 42 rendered two lanes called `Sprint 193` and two called `Sprint 194` on the
-  first live run, because board 12469 issues sprints of the same name into the same two
+  first live run, because board 7 issues sprints of the same name into the same two
   projects.
+- **Matched by sprint id against the board's sprint list, not by the field's `boardId`.**
+  `boardId` names the board that created the sprint. Board 42 also shows the sprints board 7
+  creates, so a `boardId` filter dropped the active sprint and sent its issues to
+  the trailing lane.
 - **The board query is live sprints *plus all open work*, not sprints alone.** Scoping it
   to sprints left the trailing lane holding 19 issues — precisely the ones parked in
   another board's sprint — which reads as "the backlog" while being a nineteenth of it.
@@ -137,7 +144,7 @@ issue sprints with the same name.
 | `src/types.ts` | `Sprint` interface; `Task.sprint` |
 | `src/config/types.ts` | `JiraSettings.sprintField`, `BoardConfig.sprintBoardId` |
 | `src/config/validate.ts` | parse `jira.sprint_field` / `boards[].sprint_board_id`; `"sprint"` in `GROUPINGS` |
-| `src/providers/jira.ts` | `sprintField` on `JiraConfig`; request it, map it in `toTask`, filter by `sprintBoardId` |
+| `src/providers/jira.ts` | `sprintField` on `JiraConfig`; request it, map it in `toTask`, filter by the `sprintBoardId` board's sprint list |
 | `src/grouping.ts` | `"sprint"` in `Grouping`; sprint branch in `buildLanes`; sprint segments in `backlogSegments`; `rootColumns` → `rootAt` |
 | `src/useBoardKeymap.ts` | ranking crosses only a status backlog's divider |
 | `src/App.tsx` | `g r` in `GROUPING_KEYS`; offer `sprint` and `v k` when the board has sprint data |

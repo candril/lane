@@ -108,7 +108,7 @@ grouping = "parent"
 
 # A scrum board (specs/050): open it by sprint — one lane per live sprint, active
 # first, then upcoming, then "No sprint". Sprint names repeat across boards, so
-# `sprint_board_id` (from the board's URL) scopes the lanes to this board's own.
+# `sprint_board_id` (from the board's URL) scopes the lanes to the sprints it shows.
 [[boards]]
 name = "Web & Apps"
 grouping = "sprint"

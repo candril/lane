@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test"
-import { rankFailure, toHistory } from "./jira"
+import { rankFailure, resolveSprint, toHistory } from "./jira"
 
 test("the changelog comes out newest first whichever way Jira sent it, minus the churn", () => {
   const history = toHistory({
@@ -57,4 +57,24 @@ test("a refusal without a message still fails, naming the issue and status", () 
 test("a malformed body is not treated as failure", () => {
   expect(rankFailure({ entries: "nope" })).toBeNull()
   expect(rankFailure("text")).toBeNull()
+})
+
+// Board 42 shows sprints board 7 created: the field's `boardId` names the creator,
+// so only the board's own sprint list says which of an issue's sprints it shows.
+
+const borrowed = { id: 195, name: "Sprint 195", state: "active", boardId: 7 }
+const own = { id: 197, name: "Sprint 197", state: "future", boardId: 42 }
+const twin = { id: 9195, name: "Sprint 195", state: "active", boardId: 7 }
+
+test("a sprint the board shows counts though another board created it", () => {
+  expect(resolveSprint([borrowed, own], new Set([195, 197]))?.id).toBe(195)
+})
+
+test("a same-named sprint the board doesn't show is dropped", () => {
+  expect(resolveSprint([twin], new Set([195, 197]))).toBeUndefined()
+  expect(resolveSprint([twin, own], new Set([195, 197]))?.id).toBe(197)
+})
+
+test("without a board's sprint list every live sprint counts", () => {
+  expect(resolveSprint([twin])?.id).toBe(9195)
 })

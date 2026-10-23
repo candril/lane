@@ -76,7 +76,7 @@ jql = "labels not in (UX, PO) OR labels is EMPTY"
 
 The `sprint` grouping appears once the board's issues carry sprints — set `sprint_field` in
 `[jira]` and lane reads the active and upcoming ones. Each lane names its sprint, its state
-and its dates. `sprint_board_id` on the board keeps the lanes to that Jira board's own sprints,
+and its dates. `sprint_board_id` on the board keeps the lanes to the sprints that Jira board shows,
 since two boards routinely name theirs the same.
 
 ![Grouped by sprint](../../../assets/screenshots/board-sprint.png)

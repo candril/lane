@@ -28,7 +28,7 @@ export interface JiraConfig {
    */
   sprintField?: string
   /**
-   * Keep only sprints belonging to this Jira board (specs/050). One project's issues
+   * Keep only the sprints this Jira board shows (specs/050). One project's issues
    * can sit in sprints from several boards, which routinely reuse each other's sprint
    * names, so lanes would otherwise double up. Omitted → every live sprint counts.
    */
@@ -227,7 +227,6 @@ interface RawSprint {
   id?: number
   name?: string
   state?: string
-  boardId?: number
   startDate?: string
   endDate?: string
 }
@@ -239,14 +238,18 @@ interface RawSprint {
  *
  * Closed sprints are dropped outright rather than ranked last — a card whose sprints are
  * all closed belongs in the backlog lane, not in a lane of its own.
+ *
+ * `shown` is matched by sprint id, not by the field's `boardId`: that is the board that
+ * created the sprint, and a board's filter routinely pulls in sprints another board
+ * created and runs.
  */
-function resolveSprint(value: unknown, boardId?: number): Sprint | undefined {
+export function resolveSprint(value: unknown, shown?: Set<number>): Sprint | undefined {
   if (!Array.isArray(value)) {
     return undefined
   }
   const live = (value as RawSprint[])
     .filter((s) => typeof s?.id === "number" && (s.state === "active" || s.state === "future"))
-    .filter((s) => boardId === undefined || s.boardId === boardId)
+    .filter((s) => shown === undefined || shown.has(s.id as number))
     .map((s) => ({
       id: s.id as number,
       name: s.name ?? `Sprint ${s.id}`,
@@ -337,6 +340,31 @@ export function createJiraProvider(config: JiraConfig): BoardProvider {
     statusToColumn.set(status.toLowerCase(), slug(status))
   }
 
+  // Refreshed on every load, so a sprint started since the last one gets its lane.
+  let shownSprints: Set<number> | undefined
+
+  /** Ids of the active and future sprints a Jira board shows, across every page. */
+  async function fetchBoardSprints(boardId: number): Promise<Set<number>> {
+    const ids = new Set<number>()
+    let startAt = 0
+    for (;;) {
+      const page = await client.request<{ values?: { id?: number }[]; isLast?: boolean }>(
+        "GET",
+        `/rest/agile/1.0/board/${boardId}/sprint?state=active,future&startAt=${startAt}`,
+      )
+      const values = page.values ?? []
+      for (const v of values) {
+        if (typeof v.id === "number") {
+          ids.add(v.id)
+        }
+      }
+      if (page.isLast !== false || values.length === 0) {
+        return ids
+      }
+      startAt += values.length
+    }
+  }
+
   // Resolved assignee ids, keyed by the sample issue (specs/027). The list model
   // already carries accountId, but keeping the cache preserves the App's flow.
   const assigneeIdCache = new Map<string, { id: string; displayName: string }>()
@@ -365,7 +393,7 @@ export function createJiraProvider(config: JiraConfig): BoardProvider {
       epicName: epicNameOf(raw, type),
       labels: fields.labels ?? [],
       sprint: config.sprintField
-        ? resolveSprint(fields[config.sprintField], config.sprintBoardId)
+        ? resolveSprint(fields[config.sprintField], shownSprints)
         : undefined,
     }
   }
@@ -500,7 +528,16 @@ export function createJiraProvider(config: JiraConfig): BoardProvider {
       // into the parents set, where they'd also arrive from the sub-task query and
       // render twice.
       const parentJql = `(${config.jql}) AND issuetype not in subTaskIssueTypes()`
-      const parents = await logRequest("list top-level", () => fetchIssues(parentJql))
+      const sprintBoardId = config.sprintField ? config.sprintBoardId : undefined
+      const [parents, sprints] = await Promise.all([
+        logRequest("list top-level", () => fetchIssues(parentJql)),
+        sprintBoardId === undefined
+          ? undefined
+          : logRequest(`list sprints of board ${sprintBoardId}`, () =>
+              fetchBoardSprints(sprintBoardId),
+            ),
+      ])
+      shownSprints = sprints
 
       const seen = new Set<string>()
       const tasks: Task[] = []
