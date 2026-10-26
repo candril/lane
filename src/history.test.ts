@@ -50,3 +50,10 @@ test("a comment row is its opening line, carrying the whole comment for ↵", ()
   expect(row!.comment).toBe(comment)
   expect(row!.diff).toBeUndefined()
 })
+
+test("a comment row reads links as their text and drops emphasis marks", () => {
+  const comment =
+    "Replaced by [SHOP-9](https://example.test/SHOP-9) — see **the spec**, `docs/x.md`"
+  const [row] = historyRows([{ at: "2026-09-04T12:00:00Z", author: "Ada", items: [], comment }], 0)
+  expect(row!.summary).toBe("Replaced by SHOP-9 — see the spec, docs/x.md")
+})

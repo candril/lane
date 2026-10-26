@@ -82,5 +82,12 @@ export function historyRows(
 /** A comment's opening text on one line — the row is a pointer, `↵` reads the rest. */
 function firstLine(markdown: string): string {
   const line = markdown.split("\n").find((l) => l.trim() !== "") ?? ""
-  return line.replace(/^\s*(?:[#>*-]+|\d+\.)\s+/, "").trim() || "(empty comment)"
+  return (
+    line
+      .replace(/^\s*(?:[#>*-]+|\d+\.)\s+/, "")
+      // Links read as their text — a URL would fill the row with nothing worth seeing.
+      .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
+      .replace(/\*\*|__|[*`]/g, "")
+      .trim() || "(empty comment)"
+  )
 }

@@ -348,18 +348,29 @@ export const IssueDetail = forwardRef<ScrollBoxRenderable, IssueDetailProps>(fun
                 backgroundColor={focusIndex === row.index ? theme.cardBgFocused : undefined}
               >
                 <box flexDirection="row">
-                  <text fg={theme.textDim}>{cell(row.when, 13)}</text>
+                  <box flexShrink={0}>
+                    <text fg={theme.textDim}>{cell(row.when, 13)}</text>
+                  </box>
                   {/* The author as the board's initials chip: the same person reads
                       the same everywhere, and a name column cost half the row. */}
-                  <Avatar name={row.author} />
-                  {row.comment !== undefined ? (
-                    <text fg={theme.textDim}>
-                      {" "}
-                      " <span fg={theme.text}>{row.summary}</span>
-                    </text>
-                  ) : (
-                    <text fg={theme.text}> {row.summary}</text>
-                  )}
+                  <box flexShrink={0}>
+                    <Avatar name={row.author} />
+                  </box>
+                  {/* One line per entry, clipped: a wrapped row squeezes the date and
+                      chip columns out of line, and ↵ is where the full text lives. */}
+                  <box flexGrow={1} flexShrink={1} overflow="hidden">
+                    {row.comment !== undefined ? (
+                      <text fg={theme.textDim} wrapMode="none">
+                        {" "}
+                        " <span fg={theme.text}>{row.summary}</span>
+                      </text>
+                    ) : (
+                      <text fg={theme.text} wrapMode="none">
+                        {" "}
+                        {row.summary}
+                      </text>
+                    )}
+                  </box>
                 </box>
               </box>
             ))}
