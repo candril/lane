@@ -42,3 +42,11 @@ test("the section caps what it draws, until asked for the rest", () => {
   expect(historyRows(many, 1)).toHaveLength(HISTORY_CAP)
   expect(historyRows(many, 1, Infinity)).toHaveLength(HISTORY_CAP + 5)
 })
+
+test("a comment row is its opening line, carrying the whole comment for ↵", () => {
+  const comment = "\n## Repro\n\nOnly on staging, and only with a saved card.\n\nMore below."
+  const [row] = historyRows([{ at: "2026-09-04T12:00:00Z", author: "Ada", items: [], comment }], 0)
+  expect(row!.summary).toBe("Repro")
+  expect(row!.comment).toBe(comment)
+  expect(row!.diff).toBeUndefined()
+})

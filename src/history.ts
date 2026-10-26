@@ -13,6 +13,8 @@ export interface DetailHistoryRow {
   summary: string
   /** A text field's before and after, for the diff view; only the first per entry. */
   diff?: { field: string; from: string; to: string }
+  /** A comment's Markdown, opened in full in place of the description (specs/061). */
+  comment?: string
 }
 
 /**
@@ -57,6 +59,15 @@ export function historyRows(
   limit = HISTORY_CAP,
 ): DetailHistoryRow[] {
   return history.slice(0, limit).map((entry, i) => {
+    if (entry.comment !== undefined) {
+      return {
+        index: firstIndex + i,
+        when: shortDateTime(entry.at),
+        author: entry.author,
+        summary: firstLine(entry.comment),
+        comment: entry.comment,
+      }
+    }
     const edit = entry.items.find((item) => DIFFABLE.has(item.field))
     return {
       index: firstIndex + i,
@@ -66,4 +77,10 @@ export function historyRows(
       diff: edit ? { field: edit.field, from: edit.from ?? "", to: edit.to ?? "" } : undefined,
     }
   })
+}
+
+/** A comment's opening text on one line — the row is a pointer, `↵` reads the rest. */
+function firstLine(markdown: string): string {
+  const line = markdown.split("\n").find((l) => l.trim() !== "") ?? ""
+  return line.replace(/^\s*(?:[#>*-]+|\d+\.)\s+/, "").trim() || "(empty comment)"
 }

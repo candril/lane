@@ -57,9 +57,12 @@ interface IssueDetailProps {
   /** The changelog rows drawn (specs/058) — empty while the section is folded. */
   history: DetailHistoryRow[]
   historyCount: number
+  /** How many of the history's entries are comments (specs/061). */
+  commentCount: number
   historyFolded: boolean
-  /** A history edit shown as a diff in place of the description (specs/058). */
-  diff: { title: string; text: string } | null
+  /** A history edit shown as a diff (specs/058), or a comment in full (specs/061), in
+   * place of the description. */
+  diff: { title: string; text: string; kind: "diff" | "comment" } | null
   /** Cursor index of each section's heading — a stop of its own (specs/057) — and of
    * the history's `… N more` line while it hides the rest (specs/058). */
   sections: { children?: number; history?: number; more?: number }
@@ -187,6 +190,7 @@ export const IssueDetail = forwardRef<ScrollBoxRenderable, IssueDetailProps>(fun
     selectedKeys,
     history,
     historyCount,
+    commentCount,
     historyFolded,
     diff,
     sections,
@@ -331,6 +335,10 @@ export const IssueDetail = forwardRef<ScrollBoxRenderable, IssueDetailProps>(fun
             >
               <text fg={theme.textDim}>
                 {historyFolded ? "▸" : "▾"} history{historyFolded ? ` ${historyCount}` : ""}
+                {/* Counted apart even when open: the fold hides that anyone said anything. */}
+                {commentCount > 0
+                  ? ` · ${commentCount} comment${commentCount === 1 ? "" : "s"}`
+                  : ""}
               </text>
             </box>
             {history.map((row) => (
@@ -344,7 +352,14 @@ export const IssueDetail = forwardRef<ScrollBoxRenderable, IssueDetailProps>(fun
                   {/* The author as the board's initials chip: the same person reads
                       the same everywhere, and a name column cost half the row. */}
                   <Avatar name={row.author} />
-                  <text fg={theme.text}> {row.summary}</text>
+                  {row.comment !== undefined ? (
+                    <text fg={theme.textDim}>
+                      {" "}
+                      " <span fg={theme.text}>{row.summary}</span>
+                    </text>
+                  ) : (
+                    <text fg={theme.text}> {row.summary}</text>
+                  )}
                 </box>
               </box>
             ))}
@@ -362,7 +377,16 @@ export const IssueDetail = forwardRef<ScrollBoxRenderable, IssueDetailProps>(fun
       </box>
 
       <scrollbox ref={ref} flexGrow={1} paddingX={2} paddingY={1}>
-        {diff ? (
+        {diff?.kind === "comment" ? (
+          <box flexDirection="column">
+            <text fg={theme.textDim}>{diff.title}</text>
+            <markdown
+              content={diff.text}
+              syntaxStyle={markdownStyle()}
+              treeSitterClient={markdownTreeSitter()}
+            />
+          </box>
+        ) : diff ? (
           // The board's Markdown highlighting inside the diff, so a changed heading
           // or list still reads as one — the change is the only new thing on screen.
           <box flexDirection="column">

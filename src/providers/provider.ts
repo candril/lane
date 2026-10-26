@@ -14,12 +14,17 @@ export interface ChangeItem {
   to?: string
 }
 
-/** One changelog entry (specs/058): who changed what, when. */
+/**
+ * One history entry: who changed what, when (specs/058) — or, with `comment` set and no
+ * items, what they said (specs/061).
+ */
 export interface ChangeEntry {
   /** ISO timestamp. */
   at: string
   author: string
   items: ChangeItem[]
+  /** The comment's body as Markdown. */
+  comment?: string
 }
 
 export interface IssueDetail {

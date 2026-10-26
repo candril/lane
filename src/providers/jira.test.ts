@@ -78,3 +78,42 @@ test("a same-named sprint the board doesn't show is dropped", () => {
 test("without a board's sprint list every live sprint counts", () => {
   expect(resolveSprint([twin])?.id).toBe(9195)
 })
+
+test("comments join the changelog by time, newest first, as Markdown", () => {
+  const history = toHistory(
+    {
+      histories: [
+        {
+          created: "2026-09-02T10:00:00.000Z",
+          author: { displayName: "Lukas" },
+          items: [{ field: "status", fromString: "To Do", toString: "In Progress" }],
+        },
+      ],
+    },
+    {
+      comments: [
+        {
+          created: "2026-09-03T08:00:00.000Z",
+          author: { displayName: "Patrick" },
+          body: {
+            type: "doc",
+            content: [
+              {
+                type: "paragraph",
+                content: [
+                  { type: "mention", attrs: { id: "x", text: "@Lukas" } },
+                  { type: "text", text: " fixed in " },
+                  { type: "text", text: "#412", marks: [{ type: "strong" }] },
+                ],
+              },
+            ],
+          },
+        },
+        { created: "2026-09-01T08:00:00.000Z", author: { displayName: "Lukas" }, body: "first" },
+      ],
+    },
+  )
+  expect(history.map((h) => h.author)).toEqual(["Patrick", "Lukas", "Lukas"])
+  expect(history[0]!.comment).toBe("@Lukas fixed in **#412**")
+  expect(history[1]!.comment).toBeUndefined()
+})

@@ -374,6 +374,20 @@ const DESCRIPTIONS: Record<string, string> = {
 const HISTORY: Record<string, ChangeEntry[]> = {
   "SHOP-412": [
     {
+      at: "2026-09-04T08:40:00.000Z",
+      author: MARGARET,
+      items: [],
+      comment:
+        "@Ada Lovelace the inline *edit* links need the same focus ring as the buttons — see the\naccessibility notes on SHOP-300.",
+    },
+    {
+      at: "2026-09-03T15:02:00.000Z",
+      author: ADA,
+      items: [],
+      comment:
+        "Started on this. Plan:\n\n- one card, three sections\n- *edit* opens the step in place\n- keep the totals pinned at the bottom",
+    },
+    {
       at: "2026-09-03T14:12:00.000Z",
       author: ADA,
       items: [

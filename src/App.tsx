@@ -553,8 +553,13 @@ export function App({
   // Past the cap, the rest of the changelog is one stop away (`… N more`); once
   // revealed it stays revealed — the fold above is how the section gets small again.
   const [detailHistoryAll, setDetailHistoryAll] = useState(false)
-  // A text edit from the history, opened as a diff in place of the description.
-  const [detailDiff, setDetailDiff] = useState<{ title: string; text: string } | null>(null)
+  // A text edit from the history opened as a diff in place of the description, or a
+  // comment opened in full (specs/061).
+  const [detailDiff, setDetailDiff] = useState<{
+    title: string
+    text: string
+    kind: "diff" | "comment"
+  } | null>(null)
   // The viewer's own filter (`/`, specs/057): it narrows the children and nothing
   // else — the tab's filter stays as it was, so closing the viewer changes nothing
   // behind it. Per issue, like the history fold.
@@ -592,6 +597,7 @@ export function App({
     childKeys: detailChildKeys,
     history: detailHistory,
     historyCount: detailHistoryCount,
+    commentCount: detailCommentCount,
     sections: detailSections,
     itemKeys: detailItemKeys,
     hiddenChildren: detailHiddenChildren,
@@ -604,6 +610,7 @@ export function App({
         childKeys: [] as string[],
         history: [] as DetailHistoryRow[],
         historyCount: 0,
+        commentCount: 0,
         sections: {} as { children?: number; history?: number; more?: number },
         itemKeys: [] as string[],
         hiddenChildren: undefined as HiddenChildren | undefined,
@@ -713,6 +720,7 @@ export function App({
           : undefined,
       history,
       historyCount: entries.length,
+      commentCount: entries.filter((e) => e.comment !== undefined).length,
       sections,
       itemKeys,
     }
@@ -2114,14 +2122,23 @@ export function App({
       foldDetailSection("toggle", detailSelectedSection)
       return
     }
-    // A history row opens its edit as a diff (specs/058); a row without one is
-    // read-only, so ↵ does nothing there rather than closing the viewer underfoot.
+    // A history row opens its edit as a diff (specs/058) or its comment in full
+    // (specs/061); a row with neither is read-only, so ↵ does nothing there rather
+    // than closing the viewer underfoot.
     if (detailSelectedEntry) {
       const edit = detailSelectedEntry.diff
-      if (edit) {
+      const when = detailSelectedEntry.when.trim()
+      if (detailSelectedEntry.comment !== undefined) {
         setDetailDiff({
-          title: `${edit.field} · ${detailSelectedEntry.when} · ${detailSelectedEntry.author}`,
+          title: `comment · ${when} · ${detailSelectedEntry.author}`,
+          text: detailSelectedEntry.comment,
+          kind: "comment",
+        })
+      } else if (edit) {
+        setDetailDiff({
+          title: `${edit.field} · ${when} · ${detailSelectedEntry.author}`,
           text: unifiedDiff(edit.from, edit.to, edit.field),
+          kind: "diff",
         })
       }
       return
@@ -2488,6 +2505,7 @@ export function App({
               selectedKeys={selection}
               history={detailHistory}
               historyCount={detailHistoryCount}
+              commentCount={detailCommentCount}
               historyFolded={detailHistoryFolded}
               sections={detailSections}
               diff={detailDiff}

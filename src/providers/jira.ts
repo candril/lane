@@ -153,9 +153,9 @@ const HISTORY_NOISE = new Set([
  * rather than reversed: the order `expand=changelog` returns has proven to differ
  * from the changelog endpoint's, and the viewer's contract is newest first regardless.
  */
-export function toHistory(changelog: RawIssue["changelog"]): ChangeEntry[] {
+export function toHistory(changelog: RawIssue["changelog"], comments?: unknown): ChangeEntry[] {
   return (changelog?.histories ?? [])
-    .map((entry) => ({
+    .map((entry): ChangeEntry => ({
       at: entry.created ?? "",
       author: entry.author?.displayName ?? "someone",
       items: (entry.items ?? [])
@@ -167,7 +167,25 @@ export function toHistory(changelog: RawIssue["changelog"]): ChangeEntry[] {
         })),
     }))
     .filter((entry) => entry.items.length > 0)
+    .concat(toComments(comments))
     .sort((a, b) => b.at.localeCompare(a.at))
+}
+
+interface RawComment {
+  created?: string
+  author?: { displayName?: string }
+  body?: unknown
+}
+
+/** The `comment` field of a single-issue fetch, as history entries (specs/061). */
+function toComments(field: unknown): ChangeEntry[] {
+  const comments = (field as { comments?: RawComment[] } | undefined)?.comments ?? []
+  return comments.map((c) => ({
+    at: c.created ?? "",
+    author: c.author?.displayName ?? "someone",
+    items: [],
+    comment: adfToMarkdown(c.body).markdown,
+  }))
 }
 
 /** One workflow transition, as `?expand=transitions.fields` reports it. */
@@ -621,7 +639,7 @@ export function createJiraProvider(config: JiraConfig): BoardProvider {
         client.request<RawIssue>(
           "GET",
           // The changelog rides on the same request (specs/058): one issue, one call.
-          `/rest/api/3/issue/${key}?fields=${[...LIST_FIELDS, "description"].join(",")}&expand=changelog`,
+          `/rest/api/3/issue/${key}?fields=${[...LIST_FIELDS, "description", "comment"].join(",")}&expand=changelog`,
         ),
       )
       const { markdown, unsupported } = adfToMarkdown(raw.fields?.description)
@@ -629,7 +647,7 @@ export function createJiraProvider(config: JiraConfig): BoardProvider {
         task: toTask(raw),
         description: markdown,
         unsupported,
-        history: toHistory(raw.changelog),
+        history: toHistory(raw.changelog, raw.fields?.comment),
       }
     },
 

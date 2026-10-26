@@ -97,7 +97,7 @@ status lifecycle, prioritisation, Open Questions, and cross-linking.
 | 057 | [Detail Navigation](./057-detail-navigation.md) | Implemented | `j`/`k` walk the viewer's linked issues, actions target the selection, `↵` drills in and `⌫` backs out |
 | 060 | [Change Type](./060-change-type.md) | Implemented | Correct the type an issue was filed as, from the palette — story, task and bug, one issue or a selection |
 | 058 | [Issue History](./058-issue-history.md) | Implemented | A folded `history` section in the viewer — who changed what, when — and `↵` on a text edit shows it as a Markdown diff |
-| 061 | [Comments in the History](./061-comments-in-history.md) | Draft | Read-only comments interleaved in the viewer's history timeline; `↵` opens a comment in full |
+| 061 | [Comments in the History](./061-comments-in-history.md) | In Progress | Read-only comments interleaved in the viewer's history timeline; `↵` opens a comment in full |
 | 059 | [Optimistic Create](./059-optimistic-create.md) | Implemented | A quick-add lands at once under a placeholder key, with `u` undo and a failure notice that keeps what was typed |
 
 ## NFR Specs
@@ -114,9 +114,9 @@ status lifecycle, prioritisation, Open Questions, and cross-linking.
 
 - **Done**: 001–004, 018 (board-config import), 030 (per-board columns), 031 (per-board Jira config).
 - **Implemented**: 020 (filter & search), 028 (labels edit), 029 (epic on card & filter), 035 (labels on card & filter), 036 (quick filters), 007 (issue detail view), 037 (jump to item), 038 (change epic), 039 (card decoration visibility), 040 (collapse columns), 041 (set status), 042 (fold sub-tasks), 043 (sub-task filter scope), 049 (edit in `$EDITOR`), 050 (sprint swimlanes — P1 + P2), 051 (parent baskets), 052 (child visibility), 053 (close reason), 054 (copy description & title), 055 (multi-select copy), 056 (bulk edit), 057 (detail navigation), 058 (issue history), 059 (optimistic create), 060 (change type).
-- **In Progress**: 027 (assign — `a` picker done; palette/pending pending), 044 (backlog tab — P1 built), 045 (ad-hoc tabs — P1 built), 034 (epics as roots — P1 built), 046 (global search — P1 built), 047 (query-backed tabs — P1 built), 048 (one filter language — P1 built), 026 (per-board view + grouping).
+- **In Progress**: 027 (assign — `a` picker done; palette/pending pending), 044 (backlog tab — P1 built), 045 (ad-hoc tabs — P1 built), 034 (epics as roots — P1 built), 046 (global search — P1 built), 047 (query-backed tabs — P1 built), 048 (one filter language — P1 built), 026 (per-board view + grouping), 061 (comments in history — P1 built).
 - **Partial**: 008 (sub-tasks — layouts + hide done), 012 (create + rename), 019 (quick-create incl. epics).
-- **Draft** (discussed, not built): 000, 005–006, 009–011, 013–017, 021–025, 032–033, 061, all NFRs.
+- **Draft** (discussed, not built): 000, 005–006, 009–011, 013–017, 021–025, 032–033, all NFRs.
 
 > Note: 011 (shortcut dialog) supersedes the persistent help bar from the 001–002 scaffold.
 > `HelpBar.tsx` is still in the code and will be removed when 011 is implemented.
