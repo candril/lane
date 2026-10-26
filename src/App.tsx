@@ -553,13 +553,11 @@ export function App({
   // Past the cap, the rest of the changelog is one stop away (`… N more`); once
   // revealed it stays revealed — the fold above is how the section gets small again.
   const [detailHistoryAll, setDetailHistoryAll] = useState(false)
-  // A text edit from the history opened as a diff in place of the description, or a
-  // comment opened in full (specs/061).
-  const [detailDiff, setDetailDiff] = useState<{
-    title: string
-    text: string
-    kind: "diff" | "comment"
-  } | null>(null)
+  // A text edit from the history, opened as a diff in place of the description.
+  const [detailDiff, setDetailDiff] = useState<{ title: string; text: string } | null>(null)
+  // Comments read in place under their row (specs/061), by entry timestamp. Not a page
+  // like the diff: the cursor keeps moving while one is open.
+  const [detailOpenComments, setDetailOpenComments] = useState<Set<string>>(new Set())
   // The viewer's own filter (`/`, specs/057): it narrows the children and nothing
   // else — the tab's filter stays as it was, so closing the viewer changes nothing
   // behind it. Per issue, like the history fold.
@@ -573,6 +571,7 @@ export function App({
     setDetailHistoryFolded(true)
     setDetailHistoryAll(false)
     setDetailDiff(null)
+    setDetailOpenComments(new Set())
     setDetailQuery("")
   }, [detail?.key])
 
@@ -2129,16 +2128,18 @@ export function App({
       const edit = detailSelectedEntry.diff
       const when = detailSelectedEntry.when.trim()
       if (detailSelectedEntry.comment !== undefined) {
-        setDetailDiff({
-          title: `comment · ${when} · ${detailSelectedEntry.author}`,
-          text: detailSelectedEntry.comment,
-          kind: "comment",
+        const at = detailSelectedEntry.at
+        setDetailOpenComments((open) => {
+          const next = new Set(open)
+          if (!next.delete(at)) {
+            next.add(at)
+          }
+          return next
         })
       } else if (edit) {
         setDetailDiff({
           title: `${edit.field} · ${when} · ${detailSelectedEntry.author}`,
           text: unifiedDiff(edit.from, edit.to, edit.field),
-          kind: "diff",
         })
       }
       return
@@ -2507,6 +2508,7 @@ export function App({
               historyCount={detailHistoryCount}
               commentCount={detailCommentCount}
               historyFolded={detailHistoryFolded}
+              openComments={detailOpenComments}
               sections={detailSections}
               diff={detailDiff}
             />

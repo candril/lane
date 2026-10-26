@@ -11,8 +11,8 @@ opening Jira. 058 parked this as a P3 ("comments in the same timeline"), and thi
 picks it up.
 
 Comments join the history as entries of their own, interleaved with the field changes
-in one newest-first timeline. A comment row is one line. `↵` opens the full comment in
-place of the description, the same way a text edit opens as a diff. The comments come
+in one newest-first timeline. A comment row is one line, and `↵` expands it in place to
+the full comment. The comments come
 with the single-issue fetch the viewer already makes, so they cost no request.
 
 Read-only: lane shows the thread and does not write to it.
@@ -26,9 +26,10 @@ Read-only: lane shows the thread and does not write to it.
   initials chip as a change row ([058](./058-issue-history.md)). After a dim `"` comes
   the comment's first non-empty line, with a leading heading, list or quote marker
   stripped.
-- **`↵` on a comment row opens the whole comment**, rendered as Markdown in place of
-  the description. Its title gives the author's name and the date. The keys are the
-  diff page's: `⌫`/`esc`/`q` return, `j`/`k` and `^D`/`^U` scroll.
+- **`↵` on a comment row expands it in place**: the one-line row becomes the whole
+  comment, rendered as Markdown and wrapped in the row's text column, so the date and
+  chip columns stay aligned. `↵` again collapses it. Several can be open at once; all
+  close when the viewer moves to another issue, like the fold.
 - **The heading counts comments separately**: `▸ history 14 · 3 comments` folded,
   `▾ history · 3 comments` open. History starts folded on every issue, and the heading
   must still show that there is a discussion to open.
@@ -68,9 +69,7 @@ Read-only: lane shows the thread and does not write to it.
 |-----|--------|
 | `z h` | fold / unfold the history, comments included (unchanged from 058) |
 | `j` `k` `^N` `^P` | reach comment rows alongside change rows |
-| `↵` | on a comment: open the full comment |
-| `⌫` `esc` `q` | leave the comment (the viewer stays) |
-| `j` `k` `^D` `^U` | scroll the comment |
+| `↵` | on a comment: expand / collapse it in place |
 
 ## Technical Notes
 
@@ -81,10 +80,12 @@ Read-only: lane shows the thread and does not write to it.
 - **Shape.** `ChangeEntry` gains an optional `comment` (the body, already Markdown); a
   comment entry has no items. `toHistory` merges and sorts both kinds, so `history.ts`
   receives one ordered list, as it did before.
-- **Rows.** `history.ts` already turns a text edit into a row carrying a payload that
-  `↵` opens. A comment row carries its Markdown the same way, and `IssueDetail.tsx`
-  renders it with the description's `<markdown>` element instead of `<diff>`. The
-  page state carries a `kind`, `diff` or `comment`.
+- **Rows.** A comment row carries its Markdown and its entry timestamp. App keeps the
+  open comments as a set of timestamps rather than cursor indices, which shift when a
+  section above folds. `IssueDetail.tsx` renders an open one with the description's
+  `<markdown>` element inside the row's flex-bounded text column. A collapsed row
+  doesn't wrap: it is clipped at the edge, because a wrapped row squeezes the date
+  column.
 - **Mentions** come through `adfToMarkdown` as `@Name`, which it already did for
   descriptions.
 - **Mock.** Seed a few comments on the demo board, including one with a mention and an
@@ -98,6 +99,13 @@ Read-only: lane shows the thread and does not write to it.
   real 18-comment issue `maxResults` matched `total` and every comment came back, so no
   paging through `/comment`.
 
+## Decisions (as built)
+
+- **In place, not a page.** A page like 058's diff takes every key but leave and
+  scroll; for a comment that reads as being stuck, with `q` the only way back. A diff
+  needs the room, but a comment is a few lines that belong next to its neighbours, so
+  it opens where it is and the cursor keeps moving.
+
 ## File Structure
 
 | File | Change |
@@ -106,5 +114,5 @@ Read-only: lane shows the thread and does not write to it.
 | `src/providers/jira.ts` (+ test) | `comment` in the issue GET fields; map comments into the history and merge by time |
 | `src/providers/demo.ts` | seeded comments on SHOP-412 |
 | `src/history.ts` (+ test) | comment rows: marker, first line, payload; separate comment count for the heading |
-| `src/App.tsx` | `↵` on a comment row opens the comment page |
-| `src/components/IssueDetail.tsx` | comment row rendering; the heading's comment count; the comment page |
+| `src/App.tsx` | the open-comments set; `↵` on a comment row toggles it |
+| `src/components/IssueDetail.tsx` | comment rows, clipped or expanded in place; the heading's comment count |

@@ -7,6 +7,9 @@ import { shortDate } from "./grouping"
  */
 export interface DetailHistoryRow {
   index: number
+  /** The entry's timestamp — what an expanded comment is remembered by, since cursor
+   * indices shift as sections above fold. */
+  at: string
   when: string
   author: string
   /** `status → In Review · assignee → S. Lüthi`, or `description edited`. */
@@ -62,6 +65,7 @@ export function historyRows(
     if (entry.comment !== undefined) {
       return {
         index: firstIndex + i,
+        at: entry.at,
         when: shortDateTime(entry.at),
         author: entry.author,
         summary: firstLine(entry.comment),
@@ -71,6 +75,7 @@ export function historyRows(
     const edit = entry.items.find((item) => DIFFABLE.has(item.field))
     return {
       index: firstIndex + i,
+      at: entry.at,
       when: shortDateTime(entry.at),
       author: entry.author,
       summary: entry.items.map(describeChange).join(" · "),
