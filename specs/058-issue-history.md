@@ -52,8 +52,9 @@ edit opens as a Markdown-highlighted diff in place of the description.
 
 - **A split view** for wide terminals — the element supports it; unified suits the
   viewer's width today.
-- **Comments** in the same timeline. A separate request and a different shape (prose,
-  not field changes); its own spec when wanted.
+- **Comments** in the same timeline — taken up by
+  [061](./061-comments-in-history.md), which rides on the same fetch rather than a
+  separate request.
 - **Paging past 100** entries — Jira's expand returns the newest hundred; an issue
   older than that shows those.
 
