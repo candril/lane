@@ -1,5 +1,6 @@
 import { useTerminalDimensions } from "@opentui/react"
-import { TextAttributes } from "@opentui/core"
+import { TextAttributes, type BoxRenderable } from "@opentui/core"
+import type { Ref } from "react"
 import { theme } from "../theme"
 import type { ListRow } from "../grouping"
 import { priorityGlyph, typeGlyph } from "../utils/glyphs"
@@ -24,6 +25,8 @@ interface ListViewProps {
   jumpQuery?: string
   /** Keys in the multi-select copy set (specs/055), shown as a tinted row background. */
   selectedKeys?: Set<string>
+  /** The focused row, for the scroll-follow in `useScrollIntoView`. */
+  focusedRef?: Ref<BoxRenderable>
 }
 
 /**
@@ -100,6 +103,7 @@ export function ListView({
   jumpActive,
   jumpQuery,
   selectedKeys,
+  focusedRef,
 }: ListViewProps) {
   // Dim rows while a jump is active so the labels overlay clearly (specs/037).
   const dim = !!jumpActive || (!!jumpLabels && !jumpQuery)
@@ -120,77 +124,81 @@ export function ListView({
         const faded = (color: string) => fade(color, fading && !matched)
         return (
           <Fade key={row.task.key} when={fading && !matched}>
-            {row.section && (
-              <box flexDirection="row" paddingX={1} marginTop={i > 0 ? 1 : 0}>
+            {/* The ref spans the section title too, so following the cursor onto a
+                section's first row reveals its title. */}
+            <box flexDirection="column" ref={focused ? focusedRef : undefined}>
+              {row.section && (
+                <box flexDirection="row" paddingX={1} marginTop={i > 0 ? 1 : 0}>
+                  <text>
+                    <span fg={theme.primary}>{row.section.title}</span>
+                    <span fg={theme.textMuted}> ({row.section.count})</span>
+                  </text>
+                </box>
+              )}
+              <box
+                flexDirection="row"
+                paddingX={1}
+                backgroundColor={
+                  focused ? theme.cardBgFocused : selected ? theme.cardBgSelected : undefined
+                }
+              >
                 <text>
-                  <span fg={theme.primary}>{row.section.title}</span>
-                  <span fg={theme.textMuted}> ({row.section.count})</span>
-                </text>
-              </box>
-            )}
-            <box
-              flexDirection="row"
-              paddingX={1}
-              backgroundColor={
-                focused ? theme.cardBgFocused : selected ? theme.cardBgSelected : undefined
-              }
-            >
-              <text>
-                <span fg={faded(theme.textDim)}>{disclosure(row)}</span>
-                <JumpGlyph
-                  label={jumpLabels?.get(row.task.key)}
-                  char={type.char}
-                  color={faded(type.color)}
-                />
-                {/* Focus owns the row background; the key color says a focused row is
+                  <span fg={faded(theme.textDim)}>{disclosure(row)}</span>
+                  <JumpGlyph
+                    label={jumpLabels?.get(row.task.key)}
+                    char={type.char}
+                    color={faded(type.color)}
+                  />
+                  {/* Focus owns the row background; the key color says a focused row is
                     also in the copy set. */}
-                <span attributes={done ? TextAttributes.STRIKETHROUGH : undefined}>
-                  <Matched
-                    text={keyLabel(row.task.key)}
-                    query={jumpQuery}
-                    fg={faded(
-                      dim || done
-                        ? theme.textMuted
-                        : focused && selected
-                          ? theme.warning
-                          : theme.text,
-                    )}
-                  />
-                </span>
-                <span>
-                  {" "}
-                  <Matched
-                    text={summaryFor(
-                      row.task.summary,
-                      keyLabel(row.task.key),
-                      width - row.depth * 2,
-                      tags,
-                    )}
-                    query={jumpQuery}
-                    fg={faded(dim || done ? theme.textDim : theme.text)}
-                  />
-                </span>
-              </text>
-              <box flexGrow={1} />
-              {tags.labels ? (
-                <box width={LABEL_COLUMN} flexShrink={0}>
-                  <LabelTags labels={row.task.labels} max={2} width={LABEL_COLUMN} />
-                </box>
-              ) : null}
-              {tags.epics ? (
-                <box width={EPIC_COLUMN} flexShrink={0}>
-                  <EpicTag
-                    epicKey={row.task.epicKey}
-                    epicName={row.task.epicName}
-                    max={EPIC_COLUMN - 2}
-                  />
-                </box>
-              ) : null}
-              <text fg={status?.color ?? theme.textDim}>
-                {column(status?.title ?? row.task.columnId, STATUS_COLUMN)}{" "}
-              </text>
-              <text fg={priority.color}>{priority.char} </text>
-              <Avatar name={row.task.assignee} />
+                  <span attributes={done ? TextAttributes.STRIKETHROUGH : undefined}>
+                    <Matched
+                      text={keyLabel(row.task.key)}
+                      query={jumpQuery}
+                      fg={faded(
+                        dim || done
+                          ? theme.textMuted
+                          : focused && selected
+                            ? theme.warning
+                            : theme.text,
+                      )}
+                    />
+                  </span>
+                  <span>
+                    {" "}
+                    <Matched
+                      text={summaryFor(
+                        row.task.summary,
+                        keyLabel(row.task.key),
+                        width - row.depth * 2,
+                        tags,
+                      )}
+                      query={jumpQuery}
+                      fg={faded(dim || done ? theme.textDim : theme.text)}
+                    />
+                  </span>
+                </text>
+                <box flexGrow={1} />
+                {tags.labels ? (
+                  <box width={LABEL_COLUMN} flexShrink={0}>
+                    <LabelTags labels={row.task.labels} max={2} width={LABEL_COLUMN} />
+                  </box>
+                ) : null}
+                {tags.epics ? (
+                  <box width={EPIC_COLUMN} flexShrink={0}>
+                    <EpicTag
+                      epicKey={row.task.epicKey}
+                      epicName={row.task.epicName}
+                      max={EPIC_COLUMN - 2}
+                    />
+                  </box>
+                ) : null}
+                <text fg={status?.color ?? theme.textDim}>
+                  {column(status?.title ?? row.task.columnId, STATUS_COLUMN)}{" "}
+                </text>
+                <text fg={priority.color}>{priority.char} </text>
+                <Avatar name={row.task.assignee} />
+              </box>
             </box>
           </Fade>
         )

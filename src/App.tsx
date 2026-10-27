@@ -479,14 +479,18 @@ export function App({
     setFoldedSubtasks,
   })
 
+  const listFocus = Math.min(listIndex, Math.max(0, rows.length - 1))
+  const boardView = view === "board"
   const { focusedRef, laneRef: activeLaneRef } = useScrollIntoView({
     renderer,
-    view,
-    atLaneTop,
-    atContentTop,
-    atContentBottom,
+    // The row views have no lane header to reveal; a section title rides with its
+    // first row instead, inside the box the ref points at.
+    atLaneTop: boardView && atLaneTop,
+    atContentTop: boardView ? atContentTop : listFocus === 0,
+    atContentBottom: boardView ? atContentBottom : listFocus === rows.length - 1,
     deps: [
       cursor,
+      listFocus,
       view,
       grouping,
       board,
@@ -498,7 +502,6 @@ export function App({
     ],
   })
 
-  const listFocus = Math.min(listIndex, Math.max(0, rows.length - 1))
   // `rowAnchor` is set by a fold, a rank, or a refresh that changes the row set; this
   // effect puts the cursor back on that issue once the new rows exist.
   const anchorRow = (key: string) => {
@@ -2522,6 +2525,7 @@ export function App({
               jumpActive={!!jump && !jumpSearch}
               jumpQuery={jumpSearch?.query}
               selectedKeys={selection}
+              focusedRef={focusedRef}
             />
           ) : (
             <Board

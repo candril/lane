@@ -1,12 +1,11 @@
 import { useEffect, useRef } from "react"
 import type { useRenderer } from "@opentui/react"
 import { ScrollBoxRenderable, type BoxRenderable, type Renderable } from "@opentui/core"
-import type { TabMode } from "./tabs"
 
 type Renderer = ReturnType<typeof useRenderer>
 
 /**
- * Keep the keyboard-focused board card inside its scrollbox. OpenTUI's scrollbox
+ * Keep the keyboard-focused card or row inside its scrollbox. OpenTUI's scrollbox
  * tracks the mouse, not our cursor, so a keyboard move that lands off-screen would
  * leave the focused card hidden. The three `at*` flags describe where the cursor
  * sits in its column so the snap can pin the scrollbar to an extreme; `deps` is the
@@ -14,13 +13,12 @@ type Renderer = ReturnType<typeof useRenderer>
  */
 export function useScrollIntoView(args: {
   renderer: Renderer
-  view: TabMode
   atLaneTop: boolean
   atContentTop: boolean
   atContentBottom: boolean
   deps: unknown[]
 }) {
-  const { renderer, view, atLaneTop, atContentTop, atContentBottom, deps } = args
+  const { renderer, atLaneTop, atContentTop, atContentBottom, deps } = args
   const focusedRef = useRef<BoxRenderable | null>(null)
   const activeLaneRef = useRef<BoxRenderable | null>(null)
 
@@ -108,7 +106,7 @@ export function useScrollIntoView(args: {
         scrollDirtyRef.current = false
         framesLeft = 8
       }
-      if (framesLeft <= 0 || view !== "board") {
+      if (framesLeft <= 0) {
         return
       }
       framesLeft--
@@ -118,7 +116,7 @@ export function useScrollIntoView(args: {
     }
     renderer.setFrameCallback(onFrame)
     return () => renderer.removeFrameCallback(onFrame)
-  }, [renderer, view])
+  }, [renderer])
 
   return { focusedRef, laneRef: activeLaneRef }
 }
