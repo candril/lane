@@ -10,6 +10,7 @@ import { configPath, loadConfig } from "./config/loader"
 import { boardKeyFor, readBoardCache } from "./cache"
 import { readSession, type SessionState } from "./session"
 import { adfToMarkdown } from "./adf"
+import { parseOpenArgs } from "./cli"
 import { setupFocusReporting } from "./utils/focus-reporting"
 import { uniqueSourceId, type BoardSource } from "./tabs"
 import type { ChildVisibility, Config, SubtaskLayout, SwimlaneConfig } from "./config/types"
@@ -86,6 +87,14 @@ if (args[0] === "view") {
 if (args[0] === "import") {
   await importBoardConfig(args[1])
   process.exit(0)
+}
+
+// lane open <key>  → the TUI, starting on that issue's detail view (specs/063). A bad
+// key stops here, on the normal screen, before anything talks to Jira.
+const openArgs = parseOpenArgs(args)
+if (openArgs && "error" in openArgs) {
+  console.error(openArgs.error)
+  process.exit(1)
 }
 
 interface Startup {
@@ -339,6 +348,7 @@ createRoot(renderer).render(
     displayEpics={displayEpics}
     displayLabels={displayLabels}
     displaySubtaskKeys={displaySubtaskKeys}
+    initialIssue={openArgs?.key}
     onExit={exit}
   />,
 )

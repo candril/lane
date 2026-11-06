@@ -129,6 +129,8 @@ interface AppProps {
   displayLabels?: boolean
   /** Initial key visibility on checklist sub-task rows (specs/062); default hidden. */
   displaySubtaskKeys?: boolean
+  /** An issue to start on, from `lane open` (specs/063). */
+  initialIssue?: string
   onExit: () => void
 }
 
@@ -202,6 +204,7 @@ export function App({
   displayEpics,
   displayLabels,
   displaySubtaskKeys,
+  initialIssue,
   onExit,
 }: AppProps) {
   const renderer = useRenderer()
@@ -880,6 +883,15 @@ export function App({
   useEffect(() => {
     if (activeTab.sourceId !== activeSourceId) {
       switchSource(activeTab.sourceId)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // `lane open` (specs/063). Through whenLoaded because the board may hold no copy of the
+  // issue, and on boot from an empty cache it holds no issues at all.
+  useEffect(() => {
+    if (initialIssue) {
+      whenLoaded(initialIssue, () => openDetail(initialIssue))
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])

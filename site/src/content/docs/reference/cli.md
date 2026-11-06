@@ -36,6 +36,15 @@ Good for trying the keymap, for working on lane itself, and for the docs screens
 lane --version
 ```
 
+## `lane open <issue-key>`
+
+Start the TUI on one issue's detail view, whichever board holds it. Closing the view leaves you
+on the board:
+
+```sh
+lane open SHOP-412
+```
+
 ## `lane view <issue-key>`
 
 Print one issue as plain text — summary, type, status, priority, assignee, labels, description:
