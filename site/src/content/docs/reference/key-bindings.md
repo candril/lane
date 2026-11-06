@@ -40,6 +40,7 @@ always moves exactly one step instead of skipping across gaps.
 | `v a` / `v d` / `v n` | children: all / hide the done ones / none |
 | `g n` / `g p` / `g t` / `g s` / `g r` | group: none / parent / type / swimlanes / sprint |
 | `t e` / `t l` / `t a` | toggle epic tags / label tags / all tags on cards |
+| `t k` | toggle issue keys on checklist sub-task rows |
 | `/` | filter this board; in the viewer: its children |
 | `f` `a`–`z` | apply a quick filter from `[filters]` |
 | `⇧F` | filter sub-tasks strictly, or let them follow their parent |

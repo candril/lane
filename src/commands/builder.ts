@@ -218,6 +218,16 @@ export function buildCommands(ctx: CommandContext): Command[] {
         shortcut: "t l",
       },
     )
+    // Only checklist rows leave the key out, so anywhere else this would change nothing —
+    // that includes parent grouping, whose lanes draw sub-tasks as cards whatever the layout.
+    if (ctx.view === "board" && ctx.subtasks === "checklist" && ctx.grouping !== "parent") {
+      commands.push({
+        id: "view:subtask-keys",
+        label: ctx.showSubtaskKeys ? "Hide sub-task keys" : "Show sub-task keys",
+        category: "view",
+        shortcut: "t k",
+      })
+    }
   }
   // `/` narrows the viewer's children while it is up, so the command says which
   // list it is about to filter (specs/057).

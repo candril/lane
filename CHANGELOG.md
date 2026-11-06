@@ -6,6 +6,11 @@ All notable changes to lane are recorded here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- `t k` shows issue keys on the sub-task rows of the `checklist` layout, per tab. Off by default;
+  `subtask_keys = true` under `[display]` starts it on.
+
 ## [0.4.1] — 2026-09-25
 
 ### Changed

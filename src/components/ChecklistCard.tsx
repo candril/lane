@@ -9,6 +9,7 @@ import { LabelTags } from "./LabelTags"
 import { EpicTag } from "./EpicTag"
 import { JumpGlyph } from "./JumpTag"
 import { useTagVisibility } from "./TagVisibility"
+import { keyLabel } from "../pendingCreate"
 import { Fade, fade, useFading } from "./Fade"
 import { Matched } from "./Matched"
 
@@ -56,8 +57,8 @@ function statusIcon(
 
 /**
  * Parent card whose sub-tasks fold in as compact checklist rows (specs/008
- * `checklist` layout): each row is a status icon + summary — no issue key, no
- * status text — plus its labels, and stays individually selectable. Status changes
+ * `checklist` layout): each row is a status icon + summary — no status text, and the
+ * issue key only on `t k` (specs/062) — plus its labels, and stays individually selectable. Status changes
  * in place via the board's `Shift+H`/`Shift+L`, which the icon then reflects.
  * A sub-task's labels are shown because they are editable from the row (specs/028)
  * and this layout is otherwise the only place an edit leaves no visible trace.
@@ -169,6 +170,19 @@ export function ChecklistCard({
           const done = sub.columnId === doneColumnId
           const icon = statusIcon(sub, boardColumns, columnMeta)
           const fadedSub = shade(sub.key)
+          const rowColor =
+            dim || done
+              ? theme.textMuted
+              : focused
+                ? selected
+                  ? theme.warning
+                  : theme.text
+                : // A sub-task row is dim by default and its summary is usually all it
+                  // has, so a match brightens it rather than leaving the label to carry
+                  // it alone (specs/037).
+                  matched(sub.key)
+                  ? theme.text
+                  : theme.textDim
           return (
             <Fade key={sub.key} when={outerFading && !matched(sub.key)}>
               <box
@@ -194,27 +208,17 @@ export function ChecklistCard({
                 </box>
                 <box flexGrow={1} flexShrink={1} marginRight={1}>
                   <text>
-                    {/* No key cell here, so on a focused row the summary carries the
-                      selected color instead. */}
+                    {/* The key is optional here, so on a focused row the summary carries
+                      the selected color too. */}
                     <span attributes={done ? TextAttributes.STRIKETHROUGH : undefined}>
-                      <Matched
-                        text={sub.summary}
-                        query={jumpQuery}
-                        fg={fadedSub(
-                          dim || done
-                            ? theme.textMuted
-                            : focused
-                              ? selected
-                                ? theme.warning
-                                : theme.text
-                              : // A sub-task row is dim by default and its summary is all
-                                // it has, so a match brightens it rather than leaving the
-                                // label to carry it alone (specs/037).
-                                matched(sub.key)
-                                ? theme.text
-                                : theme.textDim,
-                        )}
-                      />
+                      {tags.subtaskKeys && (
+                        <Matched
+                          text={`${keyLabel(sub.key)} `}
+                          query={jumpQuery}
+                          fg={fadedSub(focused ? rowColor : theme.textMuted)}
+                        />
+                      )}
+                      <Matched text={sub.summary} query={jumpQuery} fg={fadedSub(rowColor)} />
                     </span>
                   </text>
                 </box>

@@ -77,6 +77,8 @@ export interface Projection {
    */
   epics?: boolean
   labels?: boolean
+  /** The key on checklist sub-task rows (specs/062). Absent → the `[display]` default. */
+  subtaskKeys?: boolean
   /**
    * Sub-task layout (specs/008), switched per tab with the `v` chord (specs/051) —
    * a clone can read the same query by basket while the original stays a checklist.

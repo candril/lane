@@ -9,9 +9,15 @@ import { createContext, useContext } from "react"
 export interface TagVisibility {
   epics: boolean
   labels: boolean
+  /** The key on checklist sub-task rows, the only rows that leave it out (specs/062). */
+  subtaskKeys: boolean
 }
 
-const TagVisibilityContext = createContext<TagVisibility>({ epics: true, labels: true })
+const TagVisibilityContext = createContext<TagVisibility>({
+  epics: true,
+  labels: true,
+  subtaskKeys: false,
+})
 
 export const TagVisibilityProvider = TagVisibilityContext.Provider
 

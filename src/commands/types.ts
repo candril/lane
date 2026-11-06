@@ -41,6 +41,7 @@ export interface CommandContext {
   hasSprints: boolean
   showEpics: boolean
   showLabels: boolean
+  showSubtaskKeys: boolean
   /** The tab's sub-task layout (specs/051) — every other one is offered as a command. */
   subtasks: SubtaskLayout
   /** Which children the board draws (specs/052) — every other setting is offered. */

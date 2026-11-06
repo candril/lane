@@ -182,6 +182,8 @@ export interface DisplayConfig {
   /** Initial card-tag visibility (specs/039); toggled live via the `t` chord. Default true. */
   epics?: boolean
   labels?: boolean
+  /** Issue keys on checklist sub-task rows (specs/062); toggled live via `t k`. Default false. */
+  subtaskKeys?: boolean
 }
 
 /** Background refresh settings (specs/033). */

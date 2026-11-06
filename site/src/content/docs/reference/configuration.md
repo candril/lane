@@ -82,6 +82,7 @@ subtasks = "own-column"
 children = "all"
 epics = true
 labels = true
+subtask_keys = false
 
 [refresh]
 interval = 60
@@ -235,6 +236,7 @@ these — Jira's public Agile API doesn't expose a board's swimlane definitions.
 | `children` | `all` \| `hide-done` \| `none` | `all` | Which children a board draws. `v a/d/n` switches per tab. |
 | `epics` | boolean | `true` | Show epic tags on cards. `t e` toggles live. |
 | `labels` | boolean | `true` | Show label tags on cards. `t l` toggles live. |
+| `subtask_keys` | boolean | `false` | Show issue keys on `checklist` sub-task rows. `t k` toggles live. |
 
 ## `[refresh]`
 

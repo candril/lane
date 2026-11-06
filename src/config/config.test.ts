@@ -132,6 +132,14 @@ test("parses the display sub-task layout", () => {
   expect(cfg.display?.subtasks).toBe("under-parent")
 })
 
+test("parses display.subtask_keys and rejects a non-boolean", () => {
+  const cfg = validateConfig(parse(`${MINIMAL}\n[display]\nsubtask_keys = true`), "test")
+  expect(cfg.display?.subtaskKeys).toBe(true)
+  expect(() => validateConfig(parse(`${MINIMAL}\n[display]\nsubtask_keys = "yes"`), "t")).toThrow(
+    /display\.subtask_keys/,
+  )
+})
+
 test("an unknown display.subtasks value fails clearly", () => {
   expect(() => validateConfig(parse(`${MINIMAL}\n[display]\nsubtasks = "sideways"`), "t")).toThrow(
     /display\.subtasks/,

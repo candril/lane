@@ -107,6 +107,7 @@ export interface BoardKeymapContext {
   setView: (mode: TabMode) => void
   setShowEpics: Dispatch<SetStateAction<boolean>>
   setShowLabels: Dispatch<SetStateAction<boolean>>
+  setShowSubtaskKeys: Dispatch<SetStateAction<boolean>>
   setSubtaskLayout: (layout: SubtaskLayout) => void
   setChildVisibility: (visibility: ChildVisibility) => void
   jumpEdge: (edge: "top" | "bottom") => void
@@ -513,8 +514,9 @@ export function useBoardKeymap(ctx: BoardKeymapContext) {
     }
 
     // Resolve a pending `t…` tag-visibility chord (specs/039): `e` epic tags, `l`
-    // labels, `a` both (off if either is on, else on). Any other key cancels. The tags
-    // are drawn on cards, so under the viewer there is nothing to toggle (specs/057).
+    // labels, `a` both (off if either is on, else on), `k` checklist sub-task keys
+    // (specs/062). Any other key cancels. These are drawn on cards, so under the viewer
+    // there is nothing to toggle (specs/057).
     if (tPendingRef.current) {
       tPendingRef.current = false
       if (ctx.detailOpen) {
@@ -528,6 +530,8 @@ export function useBoardKeymap(ctx: BoardKeymapContext) {
         const on = !(ctx.showEpics || ctx.showLabels)
         ctx.setShowEpics(on)
         ctx.setShowLabels(on)
+      } else if (name === "k") {
+        ctx.setShowSubtaskKeys((s) => !s)
       }
       return
     }
@@ -787,7 +791,7 @@ export function useBoardKeymap(ctx: BoardKeymapContext) {
       tabPendingRef.current = true
       return
     }
-    // `t` arms the tag-visibility chord (specs/039): `t e` epic, `t l` labels, `t a` all.
+    // `t` arms the tag-visibility chord (specs/039): `t e` epic, `t l` labels, `t a` all, `t k` keys.
     if (name === "t") {
       tPendingRef.current = true
       return

@@ -127,6 +127,8 @@ interface AppProps {
   /** Initial card-tag visibility from `[display]` (specs/039); default shown. */
   displayEpics?: boolean
   displayLabels?: boolean
+  /** Initial key visibility on checklist sub-task rows (specs/062); default hidden. */
+  displaySubtaskKeys?: boolean
   onExit: () => void
 }
 
@@ -199,6 +201,7 @@ export function App({
   filters,
   displayEpics,
   displayLabels,
+  displaySubtaskKeys,
   onExit,
 }: AppProps) {
   const renderer = useRenderer()
@@ -380,6 +383,7 @@ export function App({
   // the epic wants the column a board doesn't. Unset on a tab → the `[display]` default.
   const showEpics = activeTab.projection.epics ?? displayEpics ?? true
   const showLabels = activeTab.projection.labels ?? displayLabels ?? true
+  const showSubtaskKeys = activeTab.projection.subtaskKeys ?? displaySubtaskKeys ?? false
   const setShowEpics = useCallback<Dispatch<SetStateAction<boolean>>>(
     (value) =>
       updateProjection((p) => ({
@@ -394,6 +398,14 @@ export function App({
       })),
     [updateProjection, displayLabels],
   )
+  const setShowSubtaskKeys = useCallback<Dispatch<SetStateAction<boolean>>>(
+    (value) =>
+      updateProjection((p) => ({
+        subtaskKeys:
+          typeof value === "function" ? value(p.subtaskKeys ?? displaySubtaskKeys ?? false) : value,
+      })),
+    [updateProjection, displaySubtaskKeys],
+  )
   const setSubtaskLayout = useCallback(
     (next: SubtaskLayout) => updateProjection(() => ({ subtasks: next })),
     [updateProjection],
@@ -407,8 +419,8 @@ export function App({
     session?.subtaskScope === "inherit" ? "inherit" : "strict",
   )
   const tagVisibility = useMemo(
-    () => ({ epics: showEpics, labels: showLabels }),
-    [showEpics, showLabels],
+    () => ({ epics: showEpics, labels: showLabels, subtaskKeys: showSubtaskKeys }),
+    [showEpics, showLabels, showSubtaskKeys],
   )
   const [suggestIndex, setSuggestIndex] = useState(0)
 
@@ -1607,6 +1619,7 @@ export function App({
         hasSprints: groupings.includes("sprint"),
         showEpics,
         showLabels,
+        showSubtaskKeys,
         subtasks,
         children,
         filtered: detail ? detailQuery !== "" : query !== "",
@@ -1629,6 +1642,7 @@ export function App({
       groupings,
       showEpics,
       showLabels,
+      showSubtaskKeys,
       subtasks,
       children,
       query,
@@ -1699,6 +1713,7 @@ export function App({
     },
     toggleEpicTags: () => setShowEpics((on) => !on),
     toggleLabelTags: () => setShowLabels((on) => !on),
+    toggleSubtaskKeys: () => setShowSubtaskKeys((on) => !on),
     setSubtaskLayout,
     setChildVisibility,
     startFilter: () => setFiltering(true),
@@ -2396,6 +2411,7 @@ export function App({
     setView: switchView,
     setShowEpics,
     setShowLabels,
+    setShowSubtaskKeys,
     setSubtaskLayout,
     setChildVisibility,
     jumpEdge,

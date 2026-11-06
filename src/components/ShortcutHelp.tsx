@@ -38,6 +38,7 @@ const LEFT: Group[] = [
       ["v a/d/n", "children: all / hide done / none"],
       ["g n/p/t/s/r", "group: none/parent/type/swimlanes/sprint"],
       ["t e/l/a", "toggle epic / label / all tags"],
+      ["t k", "toggle keys on checklist sub-tasks"],
       ["/", "filter this board · in the viewer: its children"],
       ["f a-z", "quick filter (config)"],
       ["⇧F", "filter sub-tasks / follow parent"],

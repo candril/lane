@@ -28,6 +28,7 @@ export interface CommandActions {
   setGrouping: (grouping: Grouping) => void
   toggleEpicTags: () => void
   toggleLabelTags: () => void
+  toggleSubtaskKeys: () => void
   setSubtaskLayout: (layout: SubtaskLayout) => void
   setChildVisibility: (visibility: ChildVisibility) => void
   startFilter: () => void
@@ -117,6 +118,8 @@ export function runCommand(id: string, actions: CommandActions): void {
       return actions.toggleEpicTags()
     case "view:label-tags":
       return actions.toggleLabelTags()
+    case "view:subtask-keys":
+      return actions.toggleSubtaskKeys()
     case "view:filter":
       return actions.startFilter()
     case "view:clear-filter":

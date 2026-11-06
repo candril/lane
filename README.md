@@ -183,6 +183,7 @@ Press `?` in the app for the same list.
 | `v a` / `v d` / `v n` | children: all / hide done / none |
 | `g n` / `g p` / `g t` / `g s` / `g r` | group: none / parent / type / swimlanes / sprint |
 | `t e` / `t l` / `t a` | toggle epic / label / all tags |
+| `t k` | toggle issue keys on checklist sub-tasks |
 | `/` | filter this board |
 | `f` + letter | quick filter from `[filters]` |
 | `⇧F` | sub-tasks: match on their own, or follow a matching parent |

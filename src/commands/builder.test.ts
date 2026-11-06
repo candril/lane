@@ -10,6 +10,7 @@ const BASE: CommandContext = {
   hasSprints: false,
   showEpics: true,
   showLabels: true,
+  showSubtaskKeys: false,
   subtasks: "own-column",
   children: "all",
   filtered: false,
@@ -113,6 +114,13 @@ test("tag toggles say which way they will flip", () => {
   const hidden = buildCommands({ ...BASE, showLabels: false })
   expect(shown.find((c) => c.id === "view:label-tags")?.label).toBe("Hide label tags")
   expect(hidden.find((c) => c.id === "view:label-tags")?.label).toBe("Show label tags")
+})
+
+test("the sub-task key toggle is offered only where it changes something", () => {
+  expect(ids({ view: "board", subtasks: "checklist" })).toContain("view:subtask-keys")
+  expect(ids({ view: "board", subtasks: "own-column" })).not.toContain("view:subtask-keys")
+  expect(ids({ view: "list", subtasks: "checklist" })).not.toContain("view:subtask-keys")
+  expect(ids({ grouping: "parent", subtasks: "checklist" })).not.toContain("view:subtask-keys")
 })
 
 test("clearing a filter is offered only when one is set", () => {

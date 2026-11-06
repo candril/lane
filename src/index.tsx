@@ -113,6 +113,7 @@ interface Startup {
   /** Initial card-tag visibility from `[display]` (specs/039). */
   displayEpics?: boolean
   displayLabels?: boolean
+  displaySubtaskKeys?: boolean
 }
 
 /**
@@ -200,6 +201,7 @@ async function startup(): Promise<Startup> {
   const childVisibility = config?.display?.children
   const displayEpics = config?.display?.epics
   const displayLabels = config?.display?.labels
+  const displaySubtaskKeys = config?.display?.subtaskKeys
   const session = readSession()
   const refreshInterval = config?.refresh?.interval ?? 60
   const refreshOnFocus = config?.refresh?.onFocus ?? true
@@ -253,6 +255,7 @@ async function startup(): Promise<Startup> {
         filters: config?.filters,
         displayEpics,
         displayLabels,
+        displaySubtaskKeys,
       }
     }
   }
@@ -273,6 +276,7 @@ async function startup(): Promise<Startup> {
     filters: config?.filters,
     displayEpics,
     displayLabels,
+    displaySubtaskKeys,
   }
 }
 
@@ -290,6 +294,7 @@ const {
   filters,
   displayEpics,
   displayLabels,
+  displaySubtaskKeys,
 } = await startup()
 
 const renderer = await createCliRenderer({
@@ -333,6 +338,7 @@ createRoot(renderer).render(
     filters={filters}
     displayEpics={displayEpics}
     displayLabels={displayLabels}
+    displaySubtaskKeys={displaySubtaskKeys}
     onExit={exit}
   />,
 )

@@ -170,6 +170,7 @@ function parseDisplay(value: unknown): DisplayConfig | undefined {
     children: children as ChildVisibility | undefined,
     epics: optBool(raw.epics, "display.epics"),
     labels: optBool(raw.labels, "display.labels"),
+    subtaskKeys: optBool(raw.subtask_keys, "display.subtask_keys"),
   }
 }
 

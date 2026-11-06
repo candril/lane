@@ -49,7 +49,7 @@ config ([015](./015-configuration.md)):
 3. **`checklist`** — the sub-task folds *into* the parent card as a compact checklist row: a
    status icon only (`○` first column / `◔ ◑ ◕` spread across the columns in flight / `✓`
    done, coloured by column — shape *and* hue, since one `◐` in three colours left the
-   middle columns indistinguishable), no issue key, no status text — plus its labels ([035](./035-labels-on-card-and-filter.md),
+   middle columns indistinguishable), no issue key unless `t k` asks for it ([062](./062-checklist-subtask-keys.md)), no status text — plus its labels ([035](./035-labels-on-card-and-filter.md),
    subject to the `t l` toggle), since the row is where they are edited and hiding them
    makes an edit look like it did nothing. Rows stay individually selectable; status changes in place with
    the board's `Shift+H`/`Shift+L` (the same transition as a card move — it acts on the

@@ -114,7 +114,7 @@ subtasks = "own-column"   # own-column | under-parent | checklist | basket
 | --- | --- |
 | `own-column` (`v o`) | each sub-task sits in the column matching **its own** status, tagged `↳PARENT` so the link stays visible (the default) |
 | `under-parent` (`v u`) | each sub-task nests under its parent in the parent's column, indented with `↳` and badged with its own status |
-| `checklist` (`v c`) | each sub-task becomes a compact row *inside* the parent card — a status icon, no key, still selectable, status changed in place with `⇧H` / `⇧L` |
+| `checklist` (`v c`) | each sub-task becomes a compact row *inside* the parent card — a status icon, no key unless `t k` turns keys on, still selectable, status changed in place with `⇧H` / `⇧L` |
 | `basket` (`v g`) | own-column cells, with each parent's run of cards wrapped in a tray headed by the parent |
 
 ![Baskets](../../../assets/screenshots/baskets.png)
@@ -132,14 +132,15 @@ A parent says how many children it isn't showing. The issue viewer follows the s
 
 ## Card decorations
 
-`t e` toggles epic tags, `t l` label tags, `t a` both. Per tab, since a backlog is read down the
-epic while a board is read across the columns and the same setting rarely suits both. The
-starting state comes from `[display]`:
+`t e` toggles epic tags, `t l` label tags, `t a` both, and `t k` the issue keys on checklist
+sub-task rows. Per tab, since a backlog is read down the epic while a board is read across the
+columns and the same setting rarely suits both. The starting state comes from `[display]`:
 
 ```toml
 [display]
 epics = true
 labels = true
+subtask_keys = false
 ```
 
 Tag colours are hashed from the label or epic key, so a given tag keeps its colour on every
