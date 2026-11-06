@@ -248,16 +248,18 @@ export function useIssueDetail(provider: BoardProvider) {
 
   /**
    * `⌫`: back to the issue we drilled in from — with the cursor on the link we left
-   * through, so ↵ ⌫ is a round trip — or out of the viewer at the root.
+   * through, so ↵ ⌫ is a round trip — or out of the viewer at the root. Returns whether
+   * it left the viewer, because `lane open` has somewhere further to go from there.
    */
   const back = useCallback(() => {
     const previous = trail.current.pop()
     if (previous) {
       show(previous.key)
       setFocus(previous.focus)
-      return
+      return false
     }
     close()
+    return true
   }, [show, close])
 
   /** ↵ on an open viewer closes it; on anything else it switches to that issue. */

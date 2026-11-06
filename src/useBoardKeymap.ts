@@ -153,6 +153,8 @@ export interface BoardKeymapContext {
   openDetailItem: () => void
   /** ⌫ in the viewer: back up the trail drilled in, closing at the root. */
   backDetail: () => void
+  /** The viewer is the one `lane open` started on (specs/063). */
+  startedOnIssue: boolean
   /** ⇧J/⇧K in the viewer: rank the selected child against its siblings. */
   rankDetailChild: (direction: -1 | 1) => void
   /** `z a/o/c`, `l`/`h` in the viewer: fold the section under its cursor (specs/057). */
@@ -588,6 +590,15 @@ export function useBoardKeymap(ctx: BoardKeymapContext) {
       // the board's esc order. `ctx.query` is that filter while the viewer is up.
       if (name === "escape" && ctx.query !== "") {
         ctx.setQuery("")
+        return
+      }
+      // `lane open` has no board behind it the caller asked for (specs/063): q ends the
+      // program and esc stays put, leaving ⌫ as the one way onto the board.
+      if (ctx.startedOnIssue && name === "q") {
+        ctx.onExit()
+        return
+      }
+      if (ctx.startedOnIssue && name === "escape") {
         return
       }
       if (name === "escape" || name === "q") {

@@ -38,12 +38,15 @@ lane --version
 
 ## `lane open <issue-key>`
 
-Start the TUI on one issue's detail view, whichever board holds it. Closing the view leaves you
-on the board:
+Start the TUI on one issue's detail view, whichever board holds it:
 
 ```sh
 lane open SHOP-412
 ```
+
+`q` quits lane. `⌫` walks back up any links you followed, then lands on the first tab in its
+default view, clearing any filter, mode or grouping saved for that tab. `esc` doesn't leave the
+view.
 
 ## `lane view <issue-key>`
 

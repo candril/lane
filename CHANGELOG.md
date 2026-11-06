@@ -10,7 +10,8 @@ All notable changes to lane are recorded here. The format follows
 
 - `t k` shows issue keys on the sub-task rows of the `checklist` layout, per tab. Off by default;
   `subtask_keys = true` under `[display]` starts it on.
-- `lane open <issue-key>` starts the TUI on that issue's detail view.
+- `lane open <issue-key>` starts the TUI on that issue's detail view. `q` quits; `⌫` backs out to
+  the first tab in its default view.
 
 ## [0.4.1] — 2026-09-25
 

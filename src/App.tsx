@@ -891,10 +891,26 @@ export function App({
   // issue, and on boot from an empty cache it holds no issues at all.
   useEffect(() => {
     if (initialIssue) {
-      whenLoaded(initialIssue, () => openDetail(initialIssue))
+      whenLoaded(initialIssue, () => {
+        setStartedOnIssue(true)
+        openDetail(initialIssue)
+      })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // Set only once the issue is up, so a failed open is an ordinary board from the start.
+  // Any way out of the viewer ends the mode: what follows is a normal running lane.
+  const [startedOnIssue, setStartedOnIssue] = useState(false)
+  // Only an open → closed transition ends it: on mount the viewer is still closed in this
+  // effect's closure even when the open above has just gone through for an on-board issue.
+  const viewerWasOpen = useRef(false)
+  useEffect(() => {
+    if (viewerWasOpen.current && !detail) {
+      setStartedOnIssue(false)
+    }
+    viewerWasOpen.current = !!detail
+  }, [detail])
 
   // Global search (specs/046). The results come from the network, so App owns the
   // state: a request counter drops a slow early answer that lands after a fast late
@@ -1195,6 +1211,42 @@ export function App({
     setListIndex(0)
     if (tab.sourceId !== activeSourceId) {
       switchSource(tab.sourceId)
+    }
+  }
+
+  /**
+   * ⌫ out of a `lane open` viewer (specs/063). The caller named an issue, not a board, so
+   * the restored tab and its filter mean nothing to whoever is backing out: they land on
+   * the first tab as a fresh launch would draw it.
+   */
+  function returnToFirstTab() {
+    const first = tabs[0]!
+    const firstSource = sources.find((s) => s.id === first.sourceId)
+    if (firstSource) {
+      setTabs((prev) =>
+        prev.map((t) =>
+          t.id === first.id ? { ...t, projection: defaultProjection(firstSource) } : t,
+        ),
+      )
+    }
+    setActiveTabId(first.id)
+    setCursor({ lane: 0, column: 0, row: 0, onHeader: true })
+    setListIndex(0)
+    if (first.sourceId !== activeSourceId) {
+      switchSource(first.sourceId)
+    }
+  }
+
+  function backOutOfDetail() {
+    if (backDetail() && startedOnIssue) {
+      returnToFirstTab()
+    }
+  }
+
+  /** In `lane open`, ↵ and the palette can't close the viewer: only ⌫ leaves for the board. */
+  function toggleViewer() {
+    if (!startedOnIssue || detail?.key !== currentKey) {
+      toggleDetail(currentKey)
     }
   }
 
@@ -1679,7 +1731,7 @@ export function App({
     startAssign,
     startLabels,
     startEpic,
-    toggleDetail: () => toggleDetail(currentKey),
+    toggleDetail: toggleViewer,
     startEdit,
     editInEditor,
     openIssue: () => {
@@ -2175,7 +2227,9 @@ export function App({
       return
     }
     if (!detailSelected) {
-      closeDetail()
+      if (!startedOnIssue) {
+        closeDetail()
+      }
       return
     }
     const key = detailSelected.key
@@ -2436,14 +2490,15 @@ export function App({
     namingTab: !!namingTab,
     cancelTabName: () => setNamingTab(null),
     detailOpen: !!detail,
-    toggleDetail: () => toggleDetail(currentKey),
+    toggleDetail: toggleViewer,
     closeDetail,
     scrollDetail,
     movePage,
     jumpDetailEdge,
     moveDetailFocus,
     openDetailItem,
-    backDetail,
+    backDetail: backOutOfDetail,
+    startedOnIssue,
     rankDetailChild,
     foldDetailSection,
     foldDetailHistory,
