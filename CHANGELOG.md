@@ -6,12 +6,29 @@ All notable changes to lane are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.5.0] — 2026-11-11
+
 ### Added
 
+- `lane open <issue-key>` starts the TUI on that issue's detail view, whether or not a board
+  holds it. `q` quits; `⌫` backs out to the first tab in its default view.
+- The issue viewer's history shows the issue's comments among its changes, newest first. `↵` on
+  a comment expands it in place.
+- `⇧H` / `⇧L` in the issue viewer move the selected issue one status: the issue itself, a linked
+  issue, or every marked one. An issue whose status no board column holds is refused with a
+  pointer to `⇧S`.
+- `collapsed = true` on a query swimlane starts it folded, for a lane of standing items rather
+  than the work.
 - `t k` shows issue keys on the sub-task rows of the `checklist` layout, per tab. Off by default;
   `subtask_keys = true` under `[display]` starts it on.
-- `lane open <issue-key>` starts the TUI on that issue's detail view. `q` quits; `⌫` backs out to
-  the first tab in its default view.
+
+### Fixed
+
+- A board with `sprint_board_id` dropped sprints another board had created, so an active sprint
+  could vanish and its issues fall into the backlog lane. It now keeps every sprint the board
+  shows.
+- In the list and backlog views, `j`, `^D` and `G` could move the cursor off-screen. The view now
+  scrolls with it.
 
 ## [0.4.1] — 2026-09-25
 
